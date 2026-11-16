@@ -1,0 +1,19 @@
+[Unit]
+Description=今天拍啥
+After=network.target
+
+[Service]
+Type=simple
+User=xuanti
+Group=xuanti
+WorkingDirectory=/opt/xuanti
+Environment=NODE_ENV=production
+Environment=NODE_OPTIONS=--max-old-space-size=320 --disable-warning=ExperimentalWarning
+EnvironmentFile=/etc/xuanti.env
+ExecStart=/usr/local/bin/node server.js
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

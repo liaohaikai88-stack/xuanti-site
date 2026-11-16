@@ -1,0 +1,103 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { canReadTopic, hasFullAccess, splitPreview } from "@/lib/access";
+import { favoriteIdSet, getTopic, listTopics, topicCopyText } from "@/lib/content";
+import { getCurrentUser } from "@/lib/current-user";
+import { getDb } from "@/lib/db";
+import { formatChineseDate, todayShanghai } from "@/lib/dates";
+import { platformClass, splitPlatforms } from "@/lib/platforms";
+import { CopyButton } from "@/components/copy-button";
+import { FavoriteButton } from "@/components/favorite-button";
+import { TopicCard } from "@/components/topic-card";
+
+type Params = { params: Promise<{ id: string }> };
+
+export async function generateMetadata({ params }: Params): Promise<Metadata> {
+  const { id } = await params;
+  const db = getDb();
+  const topic = getTopic(db, Number(id));
+  const user = await getCurrentUser();
+  const today = todayShanghai();
+  const todays = listTopics(db, { date: today });
+  if (!topic || !canReadTopic(topic, todays, user, today)) {
+    return { title: "登录后查看选题", robots: { index: false, follow: false } };
+  }
+  return {
+    title: topic.title,
+    description: topic.hook,
+    openGraph: { title: topic.title, description: topic.hook },
+  };
+}
+
+export default async function TopicDetailPage({ params }: Params) {
+  const { id } = await params;
+  const db = getDb();
+  const topic = getTopic(db, Number(id));
+  if (!topic) notFound();
+  const user = await getCurrentUser();
+  const today = todayShanghai();
+  const todays = listTopics(db, { date: today });
+  if (topic.status !== "published" && user?.role !== "admin") notFound();
+  const allowed = canReadTopic(topic, todays, user, today) || user?.role === "admin";
+  if (!allowed) {
+    return (
+      <div className="shot-card lock-panel">
+        <div className="shot-kicker">今天拍啥</div>
+        <h1>这条选题需要登录后查看</h1>
+        <p className="muted">未登录只能看今天的前几条。登录后可以看全部选题和往日内容。</p>
+        <Link className="btn btn-primary" href={`/login?next=/topics/${topic.id}`}>
+          登录查看
+        </Link>
+      </div>
+    );
+  }
+  const favorites = user && hasFullAccess(user) ? favoriteIdSet(db, user.id) : new Set<number>();
+  const previewIds = new Set(splitPreview(todays, null).visible.map((item) => item.id));
+  const related = listTopics(db, { industrySlug: topic.industrySlug })
+    .filter((item) => item.id !== topic.id && (hasFullAccess(user) || previewIds.has(item.id)))
+    .slice(0, 3);
+
+  return (
+    <>
+      <article className="shot-card" style={{ borderTop: `6px solid ${topic.industryColor}` }}>
+        <div className="shot-kicker">拍摄卡 · {formatChineseDate(topic.publishDate)}</div>
+        <div className="meta-row">
+          <span className="ind-tag" style={{ ["--tone" as string]: topic.industryColor, color: topic.industryColor }}>
+            {topic.industryName}
+          </span>
+          {splitPlatforms(topic.platform).map((name) => (
+            <span key={name} className={`plat plat-${platformClass(name)}`}>
+              {name}
+            </span>
+          ))}
+          {topic.isSample ? <span className="sample-badge">示例</span> : null}
+          {topic.status === "draft" ? <span className="sample-badge">草稿</span> : null}
+        </div>
+        <h1>{topic.title}</h1>
+        <p className="shot-hook">「{topic.hook}」</p>
+        <div className="meta-row">
+          <span>内容形式 · {topic.contentForm}</span>
+          <span>适合平台 · {topic.platform}</span>
+        </div>
+        {topic.note ? <div className="note-box">拍摄备注：{topic.note}</div> : null}
+        <div className="card-actions" style={{ marginTop: 16 }}>
+          <CopyButton text={topicCopyText(topic)} label="复制标题和钩子" />
+          <FavoriteButton topicId={topic.id} initial={favorites.has(topic.id)} />
+        </div>
+      </article>
+      {related.length > 0 ? (
+        <section>
+          <div className="section-head">
+            <h2>同行业还可以拍</h2>
+          </div>
+          <div className="masonry">
+            {related.map((item) => (
+              <TopicCard key={item.id} topic={item} favorited={favorites.has(item.id)} />
+            ))}
+          </div>
+        </section>
+      ) : null}
+    </>
+  );
+}
