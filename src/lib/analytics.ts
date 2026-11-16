@@ -10,7 +10,7 @@ export const ANALYTICS_PRIVACY_SECTION = `${ANALYTICS_HEADING}
 1. 我们在自己的服务器上统计每天的页面浏览量、独立访客、新注册、登录后的活跃人数和回访人数。
 2. 独立访客按天计算：把 IP 地址和浏览器信息做成哈希后再去重。我们不保存原始 IP 地址。同一个哈希如果在更早的日期出现过，这一天记为回访。
 3. 访客哈希最多保留 90 天，到期删除。每天的汇总数字会保留更久，里面没有 IP。
-4. 若配置了百度统计，页面会加载百度的统计脚本。百度可能通过 Cookie 收集访问信息，规则以其说明为准。未配置时不会加载这段脚本。`;
+4. 若使用了百度统计，页面会加载百度的统计脚本。百度可能通过 Cookie 收集访问信息，规则以其说明为准。没有使用时不会加载这段脚本。`;
 
 export type DayStat = {
   day: string;
@@ -139,8 +139,19 @@ export function ensureAnalyticsPrivacyClause(db: DatabaseSync): void {
     changed = true;
   }
   if (!content.includes("## 九、文案助手")) {
-    content = `${content.trimEnd()}\n\n## 九、文案助手与热点选题\n1. 当你使用「问问 AI」时，我们会把你输入的店铺情况和问题发送给所配置的大模型服务商，用来生成回复，并在服务器保存对话，方便你继续查看。\n2. 实时热点只保存公开热榜的标题、排名、热度和来源链接，不转载第三方正文。据此生成的「热点选题」是原创的门店拍法，不是新闻复述。\n3. 未配置大模型时，文案助手不会把你的内容发送出去。\n`;
+    content = `${content.trimEnd()}\n\n## 九、文案助手与热点选题\n1. 当你使用「问问 AI」时，我们会把你输入的店铺情况和问题发给大模型服务商，用来生成回复，并保存在本站，方便你继续查看。\n2. 实时热点只保存公开热榜的标题、排名、热度和来源链接，不转载第三方正文。据此生成的「热点选题」是原创的门店拍法，不是新闻复述。\n3. 没有接上写作助手时，你写的内容不会发送出去。\n`;
     changed = true;
+  }
+  const plain: Array<[string, string]> = [
+    ["发送给所配置的大模型服务商，用来生成回复，并在服务器保存对话", "发给大模型服务商，用来生成回复，并保存在本站"],
+    ["未配置大模型时，文案助手不会把你的内容发送出去。", "没有接上写作助手时，你写的内容不会发送出去。"],
+    ["若配置了百度统计，页面会加载百度的统计脚本。百度可能通过 Cookie 收集访问信息，规则以其说明为准。未配置时不会加载这段脚本。", "若使用了百度统计，页面会加载百度的统计脚本。百度可能通过 Cookie 收集访问信息，规则以其说明为准。没有使用时不会加载这段脚本。"],
+  ];
+  for (const [from, to] of plain) {
+    if (content.includes(from)) {
+      content = content.replace(from, to);
+      changed = true;
+    }
   }
   if (changed) {
     db.prepare("UPDATE legal_docs SET content = ?, updated_at = ? WHERE slug = 'privacy'").run(content, new Date().toISOString());

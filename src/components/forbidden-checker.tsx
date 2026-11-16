@@ -61,7 +61,7 @@ export function ForbiddenChecker({ remainingLabel }: { remainingLabel: string })
           </ul>
         </div>
       ) : null}
-      {text && hits.length === 0 && note.includes("未发现") ? <p>这段里没有词库里的说法。</p> : null}
+      {text && hits.length === 0 && note.includes("没有发现") ? <p>这段里没有这份清单上的说法。</p> : null}
     </form>
   );
 }

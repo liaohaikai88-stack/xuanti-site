@@ -93,7 +93,7 @@ export default async function CalendarPage({
         {events.length === 0 ? (
           <div className="empty-state">
             <h3>这个月还没有节点</h3>
-            <p>编辑会在后台继续补充。</p>
+            <p>这个月的节点还会继续补上。</p>
           </div>
         ) : (
           events.map((event) => <EventCard key={event.id} event={event} />)

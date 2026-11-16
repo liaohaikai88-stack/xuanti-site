@@ -62,7 +62,7 @@ export default async function MePage({
           {orders.length === 0 ? <p className="fine">还没有订单。</p> : null}
           {orders.map((order) => (
             <p key={order.id}>
-              {order.orderNo} · {(order.amountFen / 100).toFixed(0)} 元 · {order.status === "paid" ? "已开通" : order.status === "pending" ? "待管理员开通" : "已取消"}
+              {order.orderNo} · {(order.amountFen / 100).toFixed(0)} 元 · {order.status === "paid" ? "已开通" : order.status === "pending" ? "待确认" : "已取消"}
             </p>
           ))}
           <form method="post" action="/api/billing/orders">

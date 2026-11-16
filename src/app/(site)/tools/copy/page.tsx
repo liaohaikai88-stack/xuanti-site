@@ -7,7 +7,7 @@ import { CopyStudio } from "@/components/copy-studio";
 
 export const metadata: Metadata = {
   title: "文案工具",
-  description: "输入产品，生成可拍摄的标题和脚本提纲。未配置大模型时使用本地提纲。",
+  description: "输入产品，生成可拍摄的标题和提纲。",
 };
 
 export default async function CopyToolPage() {

@@ -14,7 +14,7 @@ export async function POST(req: Request) {
   if (!user) return redirectTo(req, "/login?next=/pricing");
   try {
     createMembershipOrder(getDb(), user.id);
-    return redirectTo(req, "/me?ok=订单已提交，等待管理员开通");
+    return redirectTo(req, "/me?ok=订单已提交，我们确认后为你开通");
   } catch (error) {
     const message = error instanceof Error ? error.message : "下单失败";
     return redirectTo(req, `/pricing?error=${encodeURIComponent(message)}`);

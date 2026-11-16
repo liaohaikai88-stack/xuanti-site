@@ -117,7 +117,7 @@ export default async function HomePage({
         <div className="section-head">
           <div>
             <h2>实时热点</h2>
-            <p>{hotUpdated ? `更新于 ${hotUpdated}` : "热榜抓取后会出现在这里。"}</p>
+            <p>{hotUpdated ? `更新于 ${hotUpdated}` : "热榜更新后会出现在这里。"}</p>
           </div>
           <Link href="/hot">看热榜</Link>
         </div>

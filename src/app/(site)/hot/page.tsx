@@ -38,8 +38,8 @@ export default async function HotPage({
       </div>
       {rows.length === 0 ? (
         <div className="empty-state">
-          <h3>{hotEnabled() ? (showAll ? "热榜还在路上" : "今天没有适合门店的热榜") : "热点抓取未开启"}</h3>
-          <p>{showAll ? "抓取失败时会保留上一份成功的快照。" : "全部热榜仍会去掉时政、灾害和案件。"}</p>
+          <h3>{hotEnabled() ? (showAll ? "热榜还在路上" : "今天没有适合门店的热榜") : "热榜暂时没有更新"}</h3>
+          <p>{showAll ? "暂时没拿到新名单时，会先留着上一份。" : "全部热榜仍会去掉时政、灾害和案件。"}</p>
           {showAll ? null : <Link className="btn btn-ghost" href="/hot?scope=all">全部热榜</Link>}
         </div>
       ) : (
@@ -63,7 +63,7 @@ export default async function HotPage({
       {ideas.length > 0 ? (
         <section>
           <h2>门店借势</h2>
-          <p className="fine">管理员导入的原创借势句子，只保留热榜标题、数字和链接。</p>
+          <p className="fine">这些是我们写的借势句子，只保留热榜标题、数字和链接。</p>
           {ideas.map((item) => (
             <article key={item.id} className="copy-card">
               <div className="copy-style">{item.platform || "热点"} · {item.industry}</div>

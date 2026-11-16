@@ -60,15 +60,15 @@ export default async function VipPage() {
         </table>
       </div>
       <h2>常见问题</h2>
-      <p><strong>额度以后怎么算？</strong> 免费档每天能用几次，只在服务器的一处额度里改。用完按上海时间的第二天恢复。</p>
+      <p><strong>额度以后怎么算？</strong> 免费档每天可用次数有限，次日 0 点恢复。</p>
       <p><strong>生成的内容能直接发吗？</strong> 不能直接当终稿。页面会标明「AI 生成，仅供参考」，发布前请你自己看一遍。</p>
-      <p><strong>现在能付款吗？</strong> 收费还没开通。需要使用时联系我们，由管理员开通并设置到期日。</p>
+      <p><strong>现在能付款吗？</strong> 收费还没开通。需要使用时联系我们，我们会帮你开通，并告诉你可用到哪一天。</p>
       <p id="contact" className="upgrade-note">看全部文案、分镜和拆解</p>
       <a className="btn btn-primary" href={betaContactHref()}>
         申请内测
       </a>
       <p className="fine">
-        没配联系邮箱时，先看<Link href="/privacy">《隐私政策》</Link>里的【联系邮箱】。
+        也可以在<Link href="/privacy">《隐私政策》</Link>里找到【联系邮箱】。
       </p>
     </article>
   );

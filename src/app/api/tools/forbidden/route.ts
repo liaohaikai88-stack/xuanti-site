@@ -23,12 +23,12 @@ export async function POST(req: Request) {
   bumpUsage(db, actor, "forbidden");
   const hits = findForbiddenHits(text, listForbiddenWords(db));
   const left = Math.max(0, quota - used - 1);
-  const remaining = forbiddenUnlimited(db, user)
+    const remaining = forbiddenUnlimited(db, user)
     ? hits.length
-      ? "不限次数。命中的词已标出。"
-      : "不限次数。未发现词库里的说法。"
+      ? "不限次数。这些词已经标出来了。"
+      : "不限次数。没有发现不适合发布的说法。"
     : hits.length
       ? `今天还剩 ${left} 次`
-      : `未发现词库里的说法。今天还剩 ${left} 次`;
+      : `没有发现不适合发布的说法。今天还剩 ${left} 次`;
   return NextResponse.json({ hits, remaining });
 }
