@@ -90,6 +90,8 @@ test("real topic and december calendar seeds", () => {
   assert.match(String(legal?.content), /【联系邮箱】/);
   assert.match(String(privacy?.content), /今天拍啥/);
   assert.match(String(privacy?.content), /【联系邮箱】/);
+  assert.match(String(privacy?.content), /不保存原始 IP/);
+  assert.match(String(privacy?.content), /百度统计/);
   db.close();
 });
 

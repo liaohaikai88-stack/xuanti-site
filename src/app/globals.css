@@ -55,6 +55,18 @@ button, input, textarea, select { font-size: 16px; }
 .desktop-nav { display: none; gap: 6px; margin-left: 8px; }
 .desktop-nav a, .top-actions a { padding: 8px 10px; border-radius: 999px; color: var(--muted); font-weight: 600; }
 .desktop-nav a.active, .top-actions a:hover, .desktop-nav a:hover { color: var(--ink); background: white; }
+.btn-primary,
+a.btn-primary,
+.top-actions a.btn-primary,
+.top-actions a.btn-primary:hover,
+a.btn-primary:hover,
+.copy-btn {
+  background: #d6420c;
+  color: #fff;
+}
+.top-actions a.btn-primary:hover,
+a.btn-primary:hover,
+.btn-primary:hover { background: #b43308; color: #fff; }
 .top-actions { margin-left: auto; display: flex; align-items: center; gap: 8px; }
 .user-chip { max-width: 96px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; background: white; border-radius: 999px; }
 
@@ -63,8 +75,8 @@ button, input, textarea, select { font-size: 16px; }
   min-height: 48px; padding: 0 20px; border-radius: 999px; border: 0;
   font-weight: 700; cursor: pointer; text-align: center;
 }
-.btn-primary { background: var(--orange); color: white; box-shadow: 0 8px 20px rgba(255, 79, 23, 0.28); }
-.btn-primary:hover { background: var(--orange-deep); }
+.btn-primary { background: #d6420c; color: #fff; box-shadow: 0 8px 20px rgba(214, 66, 12, 0.28); }
+.btn-primary:hover { background: #b43308; color: #fff; }
 .btn-ghost { background: white; color: var(--ink); border: 1px solid var(--line); }
 .btn-sm { min-height: 40px; padding: 0 14px; font-size: 14px; }
 .btn-block { width: 100%; }
@@ -116,13 +128,29 @@ button, input, textarea, select { font-size: 16px; }
 .ind-tag, .plat, .sample-badge, .form-name {
   display: inline-flex; align-items: center; border-radius: 999px; font-size: 11px; font-weight: 700; line-height: 1;
 }
-.ind-tag { padding: 5px 8px; background: color-mix(in srgb, var(--tone) 14%, white); color: var(--tone); }
+.ind-tag {
+  padding: 5px 8px;
+  background: color-mix(in srgb, var(--tone) 16%, #fff);
+  color: color-mix(in srgb, var(--tone) 78%, #1c100c);
+}
 .plats { flex-wrap: wrap; justify-content: flex-end; }
-.plat { padding: 4px 6px; color: white; }
-.plat-douyin { background: #1c1c1c; }
-.plat-xhs { background: #ff2442; }
-.plat-wechat { background: #14a35a; }
-.plat-other { background: #8a817a; }
+.plat { padding: 4px 6px; color: #fff; }
+.plat-douyin { background: #1c1c1c; color: #fff; }
+.plat-xhs { background: #d31232; color: #fff; }
+.plat-wechat { background: #0c7a45; color: #fff; }
+.plat-other { background: #5c534c; color: #fff; }
+.meta-row .plat,
+.meta-row .ind-tag,
+.meta-row .sample-badge { background-clip: padding-box; }
+.meta-row .plat-douyin { background: #1c1c1c; color: #fff; }
+.meta-row .plat-xhs { background: #d31232; color: #fff; }
+.meta-row .plat-wechat { background: #0c7a45; color: #fff; }
+.meta-row .plat-other { background: #5c534c; color: #fff; }
+.meta-row .ind-tag {
+  background: color-mix(in srgb, var(--tone) 16%, #fff);
+  color: color-mix(in srgb, var(--tone) 78%, #1c100c);
+}
+.meta-row .sample-badge { background: #2b2623; color: #fff; margin-top: 0; }
 .sample-badge { margin-top: 8px; background: #2b2623; color: white; padding: 4px 7px; }
 .topic-card h3 { margin: 10px 0 8px; font-size: 15px; line-height: 1.45; overflow-wrap: anywhere; }
 .hero h1 { overflow-wrap: anywhere; }
@@ -143,7 +171,7 @@ button, input, textarea, select { font-size: 16px; }
 .copy-btn, .fav {
   flex: 1; min-height: 36px; border-radius: 999px; border: 0; cursor: pointer; font-weight: 700; font-size: 13px;
 }
-.copy-btn { background: var(--orange); color: white; }
+.copy-btn { background: #d6420c; color: #fff; }
 .copy-btn.copied { background: #12a37a; }
 .fav { background: white; color: var(--muted); border: 1px solid var(--line); }
 .fav.on { color: #ff2442; border-color: #ffd0dc; background: #fff5f7; }
@@ -237,13 +265,20 @@ textarea { min-height: 120px; resize: vertical; }
 
 .tool-card { padding: 16px; }
 .result-title { display: flex; justify-content: space-between; gap: 8px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); }
-.footer { padding: 28px 0 10px; color: var(--muted); font-size: 13px; }
+.footer {
+  width: min(1120px, calc(100% - 28px));
+  margin: 0 auto;
+  padding: 28px 4px 108px;
+  color: var(--muted);
+  font-size: 13px;
+}
 .footer-links { display: flex; gap: 14px; margin: 8px 0; }
 .bottom-nav {
   position: fixed; left: 12px; right: 12px; bottom: calc(10px + var(--safe-bottom));
   display: grid; grid-template-columns: repeat(5, 1fr);
   background: rgba(255,255,255,.94); border-radius: 18px; box-shadow: var(--shadow); z-index: 30;
 }
+.bottom-nav-4 { grid-template-columns: repeat(4, 1fr); }
 .bottom-nav a { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 0 9px; font-size: 11px; color: var(--muted); font-weight: 700; }
 .bottom-nav a.active { color: var(--orange-deep); }
 .bottom-nav svg { width: 20px; height: 20px; }
@@ -262,6 +297,10 @@ textarea { min-height: 120px; resize: vertical; }
 .table-wrap { overflow: auto; background: white; border-radius: 16px; }
 table { width: 100%; border-collapse: collapse; font-size: 14px; }
 th, td { padding: 10px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+.chart-card { background: white; border-radius: 16px; padding: 14px; margin-top: 16px; }
+.chart-card svg { width: 100%; height: auto; display: block; }
+.legend { display: flex; gap: 14px; font-size: 13px; margin: 0 0 8px; }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; }
 .admin-form { display: grid; gap: 10px; background: white; border-radius: 16px; padding: 14px; margin: 12px 0; }
 .grid-2 { display: grid; gap: 10px; }
 .checkline { display: flex; gap: 8px; align-items: center; }
@@ -279,6 +318,7 @@ th, td { padding: 10px; border-bottom: 1px solid var(--line); text-align: left; 
   .desktop-nav { display: flex; }
   .bottom-nav { display: none; }
   .page { padding-bottom: 48px; }
+  .footer { padding-bottom: 36px; }
   .hero { grid-template-columns: 1.15fr .85fr; align-items: center; padding-top: 36px; }
   .hero-deck { display: block; }
   .logo-mark { width: 46px; height: 46px; }

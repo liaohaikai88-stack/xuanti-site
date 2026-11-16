@@ -13,19 +13,29 @@ function assert(condition, message) {
 const home = await get("/");
 assert(home.status === 200, "首页打不开");
 assert(home.text.includes("今天拍啥"), "首页没有品牌名");
-assert(home.text.includes("每天10条，"), "首页标题不对");
+assert(/每天\d+条，/.test(home.text), "首页标题没有用实际条数");
 assert(home.text.includes("拍了就有流量"), "首页标题不对");
 assert(home.text.includes("专为餐饮、美业、本地生活老板准备"), "首页副标题不对");
 assert(home.text.includes("免费看今日选题"), "首页按钮不对");
-assert(home.text.includes("国家公祭日"), "首页没有公祭日提醒");
-assert(home.text.includes("当天不做营销和娱乐内容"), "注意事项没有展示");
+assert(!home.text.includes("爆款拆解"), "首页不该展示爆款拆解");
+assert(!home.text.includes("带「示例」"), "页脚不该写示例说明");
+assert(!home.text.includes("当天不做营销和娱乐内容"), "公祭日提醒不该一直出现在首页");
 assert(!home.text.includes("199元") && !home.text.includes("199 元"), "首页出现了价格");
 assert(!home.text.includes("开通会员"), "首页出现了会员售卖");
+assert(!home.text.includes("hm.baidu.com"), "未配置时不该加载百度统计");
 
 const calendar = await get("/calendar?month=2026-12");
 assert(calendar.status === 200, "日历打不开");
 assert(calendar.text.includes("注意事项"), "日历没有注意事项");
+assert(calendar.text.includes("国家公祭日"), "日历没有公祭日");
+assert(calendar.text.includes("当天不做营销和娱乐内容"), "注意事项没有展示");
 assert(calendar.text.includes("年终聚餐"), "日历没有餐饮方向");
+const casesPage = await get("/cases");
+assert(casesPage.text.includes("这页不存在"), "拆解开关关闭时不应展示拆解正文");
+assert(!casesPage.text.includes("看一条片子为什么能留住人"), "拆解正文仍在页面上");
+const privacy = await get("/privacy");
+assert(privacy.text.includes("不保存原始 IP"), "隐私政策没有写访问统计");
+assert(privacy.text.includes("百度统计"), "隐私政策没有提到百度统计");
 
 const terms = await get("/terms");
 assert(terms.text.includes("今天拍啥"), "协议没有网站名称");

@@ -3,7 +3,7 @@ import { assignCalendarYears, parseCnDateLabel } from "./cn-date";
 import { parseCalendarCsv, inferEventType, isPlaceholder } from "./calendar-csv";
 import { parseTopicCsv, type CsvTopicRow } from "./csv";
 import { insertId, withTransaction } from "./db";
-import { isIsoDate, shanghaiDayStartIso, todayShanghai } from "./dates";
+import { addDays, isIsoDate, shanghaiDayStartIso, todayShanghai } from "./dates";
 import type {
   CalendarEvent,
   CaseStudy,
@@ -356,6 +356,17 @@ export function listEvents(db: DatabaseSync): CalendarEvent[] {
 
 export function listCautionEvents(db: DatabaseSync): CalendarEvent[] {
   return listEvents(db).filter((event) => event.caution.trim().length > 0);
+}
+
+/** Homepage notice only from 3 days before the date through the date itself. */
+export function cautionVisibleOnHome(
+  event: { caution: string; startDate: string | null; endDate: string | null },
+  today: string,
+): boolean {
+  if (!event.caution.trim() || !event.startDate) return false;
+  const from = addDays(event.startDate, -3);
+  const until = event.endDate && event.endDate >= event.startDate ? event.endDate : event.startDate;
+  return today >= from && today <= until;
 }
 
 export function listEventsForMonth(db: DatabaseSync, month: string): CalendarEvent[] {

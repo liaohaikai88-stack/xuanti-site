@@ -143,6 +143,24 @@ CREATE TABLE IF NOT EXISTS login_attempts (
   created_at TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_login_attempts_key ON login_attempts(attempt_key, created_at);
+
+CREATE TABLE IF NOT EXISTS daily_page_views (
+  day TEXT PRIMARY KEY,
+  views INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS daily_visitors (
+  day TEXT NOT NULL,
+  visitor_hash TEXT NOT NULL,
+  PRIMARY KEY (day, visitor_hash)
+);
+CREATE INDEX IF NOT EXISTS idx_daily_visitors_hash ON daily_visitors(visitor_hash, day);
+
+CREATE TABLE IF NOT EXISTS daily_active_users (
+  day TEXT NOT NULL,
+  user_id INTEGER NOT NULL,
+  PRIMARY KEY (day, user_id)
+);
 `;
 
 const globalForDb = globalThis as unknown as { __xuantiDb?: DatabaseSync; __xuantiPath?: string };

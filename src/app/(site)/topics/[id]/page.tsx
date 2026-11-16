@@ -63,7 +63,7 @@ export default async function TopicDetailPage({ params }: Params) {
       <article className="shot-card" style={{ borderTop: `6px solid ${topic.industryColor}` }}>
         <div className="shot-kicker">拍摄卡 · {formatChineseDate(topic.publishDate)}</div>
         <div className="meta-row">
-          <span className="ind-tag" style={{ ["--tone" as string]: topic.industryColor, color: topic.industryColor }}>
+          <span className="ind-tag" style={{ ["--tone" as string]: topic.industryColor }}>
             {topic.industryName}
           </span>
           {splitPlatforms(topic.platform).map((name) => (

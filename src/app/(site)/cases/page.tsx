@@ -1,11 +1,17 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { notFound } from "next/navigation";
+import { casesEnabled } from "@/lib/config";
 import { listCases } from "@/lib/content";
 import { getDb } from "@/lib/db";
 
-export const metadata: Metadata = { title: "爆款拆解", description: "今天拍啥的短视频结构拆解。未登录可以看导语，登录后看完整拆解。" };
+export async function generateMetadata(): Promise<Metadata> {
+  if (!casesEnabled()) return { title: "找不到页面", robots: { index: false, follow: false } };
+  return { title: "爆款拆解", description: "今天拍啥的短视频结构拆解。未登录可以看导语，登录后看完整拆解。" };
+}
 
 export default function CasesPage() {
+  if (!casesEnabled()) notFound();
   const cases = listCases(getDb());
   return (
     <>

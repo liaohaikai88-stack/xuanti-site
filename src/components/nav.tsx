@@ -7,15 +7,16 @@ const LINKS = [
   { href: "/", label: "今日选题", match: (path: string) => path === "/" },
   { href: "/topics", label: "选题库", match: (path: string) => path.startsWith("/topics") },
   { href: "/calendar", label: "热点日历", match: (path: string) => path.startsWith("/calendar") },
-  { href: "/cases", label: "爆款拆解", match: (path: string) => path.startsWith("/cases") },
+  { href: "/cases", label: "爆款拆解", match: (path: string) => path.startsWith("/cases"), cases: true },
   { href: "/tools/copy", label: "文案工具", match: (path: string) => path.startsWith("/tools") },
 ];
 
-export function DesktopNav() {
+export function DesktopNav({ showCases = false }: { showCases?: boolean }) {
   const pathname = usePathname();
+  const links = LINKS.filter((link) => showCases || !("cases" in link && link.cases));
   return (
     <nav className="desktop-nav" aria-label="主导航">
-      {LINKS.map((link) => (
+      {links.map((link) => (
         <Link key={link.href} href={link.href} className={link.match(pathname) ? "active" : undefined}>
           {link.label}
         </Link>
@@ -28,15 +29,16 @@ const TABS = [
   { href: "/", label: "今日", icon: "sun" },
   { href: "/topics", label: "选题", icon: "cards" },
   { href: "/calendar", label: "日历", icon: "cal" },
-  { href: "/cases", label: "拆解", icon: "bolt" },
+  { href: "/cases", label: "拆解", icon: "bolt", cases: true },
   { href: "/me", label: "我的", icon: "user" },
 ];
 
-export function BottomNav() {
+export function BottomNav({ showCases = false }: { showCases?: boolean }) {
   const pathname = usePathname();
+  const tabs = TABS.filter((tab) => showCases || !("cases" in tab && tab.cases));
   return (
-    <nav className="bottom-nav" aria-label="底部导航">
-      {TABS.map((tab) => {
+    <nav className={showCases ? "bottom-nav" : "bottom-nav bottom-nav-4"} aria-label="底部导航">
+      {tabs.map((tab) => {
         const active = tab.href === "/" ? pathname === "/" : pathname.startsWith(tab.href);
         return (
           <Link key={tab.href} href={tab.href} className={active ? "active" : undefined}>

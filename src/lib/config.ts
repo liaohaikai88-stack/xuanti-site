@@ -15,9 +15,18 @@ const INSECURE_SECRETS = new Set([
   "dev-insecure-secret-change-me",
 ]);
 
-export function isBillingEnabled(): boolean {
-  const value = (process.env.MEMBERSHIP_BILLING_ENABLED || "false").trim().toLowerCase();
+function flagEnabled(name: string, fallback = "false"): boolean {
+  const value = (process.env[name] || fallback).trim().toLowerCase();
   return value === "1" || value === "true" || value === "yes" || value === "on";
+}
+
+export function isBillingEnabled(): boolean {
+  return flagEnabled("MEMBERSHIP_BILLING_ENABLED");
+}
+
+/** Public 爆款拆解. Off until there is real case content. */
+export function casesEnabled(): boolean {
+  return flagEnabled("CASES_ENABLED");
 }
 
 export function previewCount(): number {

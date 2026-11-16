@@ -48,6 +48,8 @@ LLM_API_KEY=
 LLM_BASE_URL=https://api.openai.com/v1
 LLM_MODEL=gpt-4o-mini
 SMS_PROVIDER=none
+BAIDU_TONGJI_ID=
+CASES_ENABLED=false
 EOF
   chmod 600 /etc/xuanti.env
   install -m 600 /dev/null /root/xuanti-admin-password.txt

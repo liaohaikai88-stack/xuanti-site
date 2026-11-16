@@ -1,3 +1,4 @@
+import { ensureAnalyticsPrivacyClause } from "./analytics";
 import { ensureAdmin } from "./auth";
 import { assertProductionSecrets } from "./config";
 import { getDb } from "./db";
@@ -18,6 +19,7 @@ export async function ensureBootstrapped(): Promise<void> {
   assertProductionSecrets();
   const db = getDb();
   seedIfEmpty(db);
+  ensureAnalyticsPrivacyClause(db);
   await ensureAdmin(db);
   bootstrapped = true;
 }

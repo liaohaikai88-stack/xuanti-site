@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import { baiduTongjiSnippet } from "@/lib/analytics";
+import { VisitBeacon } from "@/components/visit-beacon";
 import { brand, canonicalUrl } from "@/lib/config";
 import { ensureBootstrapped } from "@/lib/bootstrap";
 import "./globals.css";
@@ -27,6 +29,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
   await ensureBootstrapped();
+  const tongji = baiduTongjiSnippet();
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "WebSite",
@@ -39,6 +42,8 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     <html lang="zh-CN">
       <body>
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+        {tongji ? <script dangerouslySetInnerHTML={{ __html: tongji }} /> : null}
+        <VisitBeacon />
         {children}
       </body>
     </html>

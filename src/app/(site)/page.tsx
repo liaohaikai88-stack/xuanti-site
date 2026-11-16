@@ -1,25 +1,35 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { hasFullAccess, splitPreview } from "@/lib/access";
-import { brand } from "@/lib/config";
-import { favoriteIdSet, listCases, listCautionEvents, listEvents, listIndustries, listTopics } from "@/lib/content";
+import { brand, casesEnabled } from "@/lib/config";
+import { cautionVisibleOnHome, favoriteIdSet, listCases, listCautionEvents, listEvents, listIndustries, listTopics } from "@/lib/content";
 import { getCurrentUser } from "@/lib/current-user";
 import { getDb } from "@/lib/db";
 import { formatShortDate, todayShanghai } from "@/lib/dates";
 import { TopicCard } from "@/components/topic-card";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const count = listTopics(getDb(), { date: todayShanghai() }).length;
+  const title = `每天${count}条，${brand.heroAccent}的选题`;
+  return { title: { absolute: `${brand.name} - ${title}` }, description: brand.description };
+}
 
 export default async function HomePage() {
   const db = getDb();
   const user = await getCurrentUser();
   const today = todayShanghai();
   const todays = listTopics(db, { date: today });
+  const dailyCount = todays.length;
   const accessUser = user;
   const { visible, lockedCount } = splitPreview(todays, accessUser);
   const favorites = user && hasFullAccess(user) ? favoriteIdSet(db, user.id) : new Set<number>();
-  const cautions = listCautionEvents(db);
+  const homeCautions = listCautionEvents(db).filter((event) => cautionVisibleOnHome(event, today));
+  const cautionIds = new Set(homeCautions.map((event) => event.id));
   const upcoming = listEvents(db)
     .filter((event) => event.startDate && event.startDate >= today)
     .slice(0, 3);
-  const cases = listCases(db).slice(0, 3);
+  const showCases = casesEnabled();
+  const cases = showCases ? listCases(db).slice(0, 3) : [];
   const industries = listIndustries(db);
 
   return (
@@ -28,7 +38,7 @@ export default async function HomePage() {
         <div>
           <span className="eyebrow">抖音 / 小红书都能用</span>
           <h1>
-            每天10条，<span>{brand.heroAccent}</span>的选题
+            每天{dailyCount}条，<span>{brand.heroAccent}</span>的选题
           </h1>
           <p className="sub">{brand.heroSubtitle}</p>
           <div className="hero-actions">
@@ -58,9 +68,9 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {cautions.length > 0 ? (
+      {homeCautions.length > 0 ? (
         <div className="caution-stack">
-          {cautions.map((event) => (
+          {homeCautions.map((event) => (
             <Link key={event.id} href="/calendar" className="caution-banner">
               <span className="caution-kicker">注意事项</span>
               <strong>
@@ -136,33 +146,39 @@ export default async function HomePage() {
         </div>
         <div className="event-list">
           {upcoming.map((event) => (
-            <article key={event.id} className={event.caution ? "event-card solemn" : "event-card"}>
+            <article key={event.id} className={cautionIds.has(event.id) ? "event-card solemn" : "event-card"}>
               <div className="event-type">{event.dateLabel}</div>
               <h3>{event.title}</h3>
-              {event.caution ? <p>{event.caution}</p> : <p className="prep">{event.directions.map((item) => item.direction).slice(0, 2).join(" · ")}</p>}
+              {cautionIds.has(event.id) ? (
+                <p>{event.caution}</p>
+              ) : (
+                <p className="prep">{event.directions.map((item) => item.direction).slice(0, 2).join(" · ") || event.title}</p>
+              )}
             </article>
           ))}
         </div>
       </section>
 
-      <section>
-        <div className="section-head">
-          <div>
-            <h2>爆款拆解</h2>
-            <p>先看结构。标注示例的是演示文本。</p>
+      {showCases ? (
+        <section>
+          <div className="section-head">
+            <div>
+              <h2>爆款拆解</h2>
+              <p>先看结构。标注示例的是演示文本。</p>
+            </div>
+            <Link href="/cases">全部拆解</Link>
           </div>
-          <Link href="/cases">全部拆解</Link>
-        </div>
-        <div className="case-list">
-          {cases.map((item) => (
-            <Link key={item.id} href={`/cases/${item.id}`} className="case-card">
-              {item.isSample ? <span className="sample-badge">示例</span> : null}
-              <h3>{item.title}</h3>
-              <p className="muted">{item.teaser}</p>
-            </Link>
-          ))}
-        </div>
-      </section>
+          <div className="case-list">
+            {cases.map((item) => (
+              <Link key={item.id} href={`/cases/${item.id}`} className="case-card">
+                {item.isSample ? <span className="sample-badge">示例</span> : null}
+                <h3>{item.title}</h3>
+                <p className="muted">{item.teaser}</p>
+              </Link>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       <section>
         <div className="section-head">

@@ -4,11 +4,11 @@ import type { User } from "@/lib/types";
 import { Logo } from "./logo";
 import { BottomNav, DesktopNav } from "./nav";
 
-export function Header({ user }: { user: User | null }) {
+export function Header({ user, showCases }: { user: User | null; showCases: boolean }) {
   return (
     <header className="topbar">
       <Logo />
-      <DesktopNav />
+      <DesktopNav showCases={showCases} />
       <div className="top-actions">
         {isBillingEnabled() ? (
           <Link href="/pricing" className="nav-extra">
@@ -45,11 +45,11 @@ export function Footer() {
         <Link href="/privacy">隐私政策</Link>
         <Link href="/calendar">热点日历</Link>
       </div>
-      <div>域名 {siteDomain()} · 带「示例」的拆解和部分选题是演示内容。</div>
+      <div>域名 {siteDomain()}</div>
     </footer>
   );
 }
 
-export function BottomNavSlot() {
-  return <BottomNav />;
+export function BottomNavSlot({ showCases }: { showCases: boolean }) {
+  return <BottomNav showCases={showCases} />;
 }

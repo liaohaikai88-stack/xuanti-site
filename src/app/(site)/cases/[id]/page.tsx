@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { hasFullAccess } from "@/lib/access";
+import { casesEnabled } from "@/lib/config";
 import { getCase } from "@/lib/content";
 import { getCurrentUser } from "@/lib/current-user";
 import { getDb } from "@/lib/db";
@@ -10,6 +11,7 @@ import { MarkdownView } from "@/components/markdown-view";
 type Params = { params: Promise<{ id: string }> };
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
+  if (!casesEnabled()) return { title: "找不到页面", robots: { index: false, follow: false } };
   const { id } = await params;
   const item = getCase(getDb(), Number(id));
   if (!item) return { title: "拆解" };
@@ -17,6 +19,7 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
 }
 
 export default async function CasePage({ params }: Params) {
+  if (!casesEnabled()) notFound();
   const { id } = await params;
   const item = getCase(getDb(), Number(id));
   if (!item) notFound();
