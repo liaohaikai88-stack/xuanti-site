@@ -129,7 +129,7 @@ export default async function HomePage({
               <article key={`${row.source}-${row.title}`} className="hot-row">
                 <b>{row.rank}</b>
                 <div>
-                  <strong>{row.title}</strong>
+                  <strong>{row.title}{row.title.includes("示例") ? <span className="sample-badge">示例</span> : null}</strong>
                   <div className="fine">{row.heat || "热度未知"} · {row.tags.join(" ") || row.source}</div>
                   {idea ? <p className="fine">{idea}</p> : null}
                 </div>

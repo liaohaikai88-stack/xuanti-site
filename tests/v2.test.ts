@@ -105,7 +105,7 @@ test("benchmark csv stores titles numbers and links only", () => {
     { id: 2, phrase: "最", replacement: "很", category: "绝对化" },
   ]);
   assert.equal(hits.some((hit) => hit.phrase === "顶级"), true);
-  const ideas = importHotIdeas(db, [{ title: "冬日火锅", platform: "微博", rank: 3, heat: null, url: "https://example.com", fetched_at: "2026-11-16T01:00:00.000Z", industry: "餐饮", idea: "拍开锅" }]);
+  const ideas = importHotIdeas(db, [{ title: "【示例】火锅热榜", platform: "微博", rank: 3, heat: null, url: "https://example.com", fetched_at: "2026-11-16T01:00:00.000Z", industry: "餐饮", idea: "【示例】拍开锅，不是真实热度" }]);
   assert.equal(ideas.imported, 1);
   db.close();
 });

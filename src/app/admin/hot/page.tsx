@@ -18,7 +18,7 @@ export default async function AdminHotPage({
         <input type="hidden" name="return_to" value="/admin/hot" />
         <h2>导入门店借势 JSON</h2>
         <p className="fine">数组字段：title、platform、rank、heat、url、fetched_at、industry、idea。heat 可以是 null。灾难和时政标题会被丢掉。</p>
-        <textarea name="json" rows={6} required placeholder='[{"title":"冬日火锅","platform":"微博","rank":1,"heat":null,"url":"https://example.com","fetched_at":"2026-11-16T10:00:00.000Z","industry":"餐饮","idea":"拍一锅还在冒热气的开锅"}]' />
+        <textarea name="json" rows={6} required placeholder='[{"title":"【示例】火锅热榜","platform":"微博","rank":1,"heat":null,"url":"https://example.com","fetched_at":"2026-11-16T10:00:00.000Z","industry":"餐饮","idea":"【示例】拍开锅，不是真实热度"}]' />
         <button type="submit">导入</button>
       </form>
       <h2>热点选题</h2>

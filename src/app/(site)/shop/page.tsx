@@ -53,7 +53,7 @@ export default async function ShopPage({
       {allowed ? <p className="fine">今天还剩 {left} 次</p> : null}
       <form className="form" method="post" action="/api/shop/profile">
         <label>
-          <span>店名</span>
+          <span>店名 {shop?.sample ? <span className="sample-badge">示例</span> : null}</span>
           <input name="shop_name" defaultValue={shop?.shopName || ""} required maxLength={40} />
         </label>
         <label>
@@ -136,6 +136,7 @@ export default async function ShopPage({
         ) : null}
         {result ? (
           <article className="copy-card">
+            {shop?.sample ? <p><span className="sample-badge">示例</span> {shop.shopName}</p> : null}
             <p className="fine">{AI_LABEL}</p>
             <h3>口播</h3>
             <MarkedText text={result.script} hits={result.hits} />

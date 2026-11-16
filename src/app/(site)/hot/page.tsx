@@ -48,7 +48,7 @@ export default async function HotPage({
             <article key={`${row.source}-${row.rank}-${row.title}`} className="hot-row">
               <b>{row.rank}</b>
               <div>
-                <strong>{row.title}</strong>
+                <strong>{row.title}{row.title.includes("示例") ? <span className="sample-badge">示例</span> : null}</strong>
                 {ideaForTitle(ideas, row.title) ? <p>{ideaForTitle(ideas, row.title)}</p> : null}
                 <div className="fine">
                   {sourceName(row.source)} · {row.heat || "热度未知"} · {ARROW[row.trend]}
@@ -67,7 +67,7 @@ export default async function HotPage({
           {ideas.map((item) => (
             <article key={item.id} className="copy-card">
               <div className="copy-style">{item.platform || "热点"} · {item.industry}</div>
-              <h3>{item.title}</h3>
+              <h3>{item.title}{item.title.includes("示例") ? <span className="sample-badge">示例</span> : null}</h3>
               <p>{item.idea}</p>
               <p className="fine">{item.heat || "热度未知"} · {item.fetchedAt.slice(0, 16).replace("T", " ")}</p>
               {item.url ? <a href={item.url} target="_blank" rel="noreferrer">原链接</a> : null}

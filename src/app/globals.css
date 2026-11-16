@@ -390,12 +390,19 @@ th, td { padding: 10px; border-bottom: 1px solid var(--line); text-align: left; 
 .shot-one { background: #fff; border-radius: 14px; padding: 12px; display: grid; gap: 4px; }
 .shot-one p { margin: 0; display: grid; grid-template-columns: 3em 1fr; gap: 8px; }
 .shot-one span { color: var(--muted); font-size: 12px; }
-.compare-wrap { overflow-x: auto; margin: 12px 0; }
-.compare { width: 100%; min-width: 520px; background: #fff; border-radius: 16px; }
-.compare th, .compare td { text-align: center; }
-.compare tbody th, .compare thead th:first-child { text-align: left; }
+.compare-wrap { overflow: visible; margin: 12px 0; }
+.compare { width: 100%; min-width: 0; table-layout: fixed; background: #fff; border-radius: 16px; font-size: 13px; }
+.compare th, .compare td { padding: 8px 4px; text-align: center; overflow-wrap: anywhere; }
+.compare thead th:first-child, .compare tbody th { width: 46%; text-align: left; font-size: 13px; line-height: 1.35; font-weight: 650; }
+.compare thead th:nth-child(n + 2), .compare td { width: 18%; }
 .compare small { display: block; font-weight: 500; color: var(--muted); }
-.mark { font-weight: 800; font-size: 18px; }
+.mark { font-weight: 800; font-size: 16px; }
+@media (max-width: 420px) {
+  .compare { font-size: 12px; }
+  .compare th, .compare td { padding: 6px 2px; }
+  .compare thead th:first-child, .compare tbody th { width: 43%; }
+  .mark { font-size: 15px; }
+}
 .mark.yes { color: #0f6b4c; }
 .mark.no { color: #c4b8b0; }
 @media (max-width: 719px) {
