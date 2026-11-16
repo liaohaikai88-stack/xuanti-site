@@ -5,11 +5,11 @@ import type { User } from "@/lib/types";
 import { Logo } from "./logo";
 import { BottomNav, DesktopNav } from "./nav";
 
-export function Header({ user, showCases }: { user: User | null; showCases: boolean }) {
+export function Header({ user, showCases, showAi = false }: { user: User | null; showCases: boolean; showAi?: boolean }) {
   return (
     <header className="topbar">
       <Logo />
-      <DesktopNav showCases={showCases} />
+      <DesktopNav showCases={showCases} showAi={showAi} />
       <div className="top-actions">
         {isBillingEnabled() ? (
           <Link href="/pricing" className="nav-extra">

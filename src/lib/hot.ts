@@ -16,6 +16,15 @@ const BLOCKLIST = [
   "坍塌", "矿难", "空难", "坠机", "洪水", "洪灾", "海啸", "疫情", "恐怖", "袭击",
   "战争", "炮击", "导弹", "公祭", "哀悼", "默哀", "伤亡", "重大事故", "塌方",
   "暴乱", "政变", "骚乱", "戒严", "示威", "台独", "港独", "疆独", "法轮功",
+  "元首", "总统", "总书记", "首相", "会晤", "峰会", "APEC", "亚太经合", "外交部",
+  "大使", "北约", "军演", "航母", "解放军", "阅兵", "国防部", "武器", "制裁",
+  "车祸", "交通事故", "泥石流", "台风", "失踪", "搜救", "矿难",
+  "法院", "判刑", "判决", "庭审", "被捕", "刑事", "落马", "贪污", "受贿",
+];
+
+const LIFESTYLE = [
+  "电影", "电视剧", "综艺", "演唱会", "新歌", "音乐节", "时装", "穿搭", "婚礼",
+  "游戏", "动漫", "球赛", "世界杯", "奥运", "春节", "中秋", "圣诞", "情人节",
 ];
 
 const TAGS: Array<{ name: string; words: string[] }> = [
@@ -36,7 +45,15 @@ export function hotRefreshMinutes(): number {
 }
 
 export function isBlockedHotTitle(title: string): boolean {
-  return BLOCKLIST.some((word) => title.includes(word));
+  const folded = title.toLowerCase();
+  return BLOCKLIST.some((word) => folded.includes(word.toLowerCase()));
+}
+
+/** Industry tags or ordinary lifestyle topics. Politics and hard news stay out of the default list. */
+export function isShopRelevantHot(title: string): boolean {
+  if (isBlockedHotTitle(title)) return false;
+  if (relevanceTags(title).length > 0) return true;
+  return LIFESTYLE.some((word) => title.includes(word));
 }
 
 export function relevanceTags(title: string): string[] {
@@ -286,7 +303,8 @@ export function listManualIdeas(db: DatabaseSync): ManualIdea[] {
       industry: String(row.industry || ""),
       idea: String(row.idea || ""),
       hidden: Number(row.hidden) === 1,
-    }));
+    }))
+    .filter((item) => !isBlockedHotTitle(item.title));
 }
 
 export function ideaForTitle(ideas: ManualIdea[], title: string): string {

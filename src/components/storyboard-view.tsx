@@ -5,7 +5,17 @@ export function StoryboardView({ text }: { text: string }) {
   if (parsed.rows.length === 0) return <p className="copy-body">{text}</p>;
   return (
     <div className="storyboard">
-      <div className="table-wrap">
+      <div className="shot-cards">
+        {parsed.rows.map((row) => (
+          <article key={`${row.no}-${row.duration}-${row.visual}`} className="shot-one">
+            <b>{row.no}{row.duration ? ` · ${row.duration}` : ""}</b>
+            <p><span>画面</span>{row.visual || "—"}</p>
+            <p><span>台词</span>{row.speech || "—"}</p>
+            {row.method ? <p><span>拍法</span>{row.method}</p> : null}
+          </article>
+        ))}
+      </div>
+      <div className="table-wrap shot-table-wrap">
         <table className="shot-table">
           <thead>
             <tr>

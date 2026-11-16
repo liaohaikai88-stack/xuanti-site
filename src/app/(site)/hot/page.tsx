@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { formatShanghaiClock, hotEnabled, ideaForTitle, isSolemnToday, listHotPitches, listHotRows, listManualIdeas, sourceName } from "@/lib/hot";
+import { formatShanghaiClock, hotEnabled, ideaForTitle, isShopRelevantHot, isSolemnToday, listHotPitches, listHotRows, listManualIdeas, sourceName } from "@/lib/hot";
 import { getDb } from "@/lib/db";
 import { one } from "@/lib/query";
 
@@ -12,9 +12,13 @@ export default async function HotPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const source = one((await searchParams).source);
+  const params = await searchParams;
+  const source = one(params.source);
+  const showAll = one(params.scope) === "all";
   const db = getDb();
-  const { rows, updatedAt } = hotEnabled() ? listHotRows(db, source || undefined) : { rows: [], updatedAt: null };
+  const loaded = hotEnabled() ? listHotRows(db, source || undefined) : { rows: [], updatedAt: null };
+  const rows = showAll ? loaded.rows : loaded.rows.filter((row) => isShopRelevantHot(row.title));
+  const updatedAt = loaded.updatedAt;
   const pitches = listHotPitches(db).slice(0, 8);
   const ideas = isSolemnToday(db) ? [] : listManualIdeas(db);
   return (
@@ -22,17 +26,22 @@ export default async function HotPage({
       <div className="section-head">
         <div>
           <h1>实时热点</h1>
-          <p>只使用公开热榜的标题做选题参考，不转载第三方正文。{updatedAt ? `更新于 ${formatShanghaiClock(updatedAt)}` : "还没有抓到热榜。"}</p>
+          <p>默认只留餐饮、美业、本地生活，以及影视综艺这类生活话题。时政、灾害和案件不会出现。{updatedAt ? `更新于 ${formatShanghaiClock(updatedAt)}` : "还没有抓到热榜。"}</p>
         </div>
       </div>
       <div className="chips">
-        <Link className={!source ? "chip on" : "chip"} href="/hot">全部</Link>
+        <Link className={!showAll && !source ? "chip on" : "chip"} href="/hot">适合门店</Link>
+        <Link className={showAll && !source ? "chip on" : "chip"} href="/hot?scope=all">全部热榜</Link>
         {["douyin", "weibo", "baidu", "toutiao", "bilibili"].map((id) => (
-          <Link key={id} className={source === id ? "chip on" : "chip"} href={`/hot?source=${id}`}>{sourceName(id)}</Link>
+          <Link key={id} className={source === id ? "chip on" : "chip"} href={showAll ? `/hot?scope=all&source=${id}` : `/hot?source=${id}`}>{sourceName(id)}</Link>
         ))}
       </div>
       {rows.length === 0 ? (
-        <div className="empty-state"><h3>{hotEnabled() ? "热榜还在路上" : "热点抓取未开启"}</h3><p>抓取失败时会保留上一份成功的快照。</p></div>
+        <div className="empty-state">
+          <h3>{hotEnabled() ? (showAll ? "热榜还在路上" : "今天没有适合门店的热榜") : "热点抓取未开启"}</h3>
+          <p>{showAll ? "抓取失败时会保留上一份成功的快照。" : "全部热榜仍会去掉时政、灾害和案件。"}</p>
+          {showAll ? null : <Link className="btn btn-ghost" href="/hot?scope=all">全部热榜</Link>}
+        </div>
       ) : (
         <div className="hot-list">
           {rows.map((row) => (

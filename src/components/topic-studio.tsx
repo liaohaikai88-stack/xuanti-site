@@ -21,6 +21,8 @@ export function TopicStudio({
   lockedBoards,
   lockedWhys,
   lockedBenches,
+  showRewrite,
+  applyHref,
 }: {
   topicId: number;
   copyText: string;
@@ -32,6 +34,8 @@ export function TopicStudio({
   lockedBoards: number;
   lockedWhys: number;
   lockedBenches: number;
+  showRewrite: boolean;
+  applyHref: string;
 }) {
   const tabs = [
     { id: "copy", label: "文案" },
@@ -65,7 +69,7 @@ export function TopicStudio({
               <p className="copy-body">{item.body}</p>
             </article>
           ))}
-          <Locked count={lockedCopies} label="条文案" />
+          <Locked count={lockedCopies} label="条文案" applyHref={applyHref} />
         </div>
       ) : null}
       {tab === "board" ? (
@@ -77,7 +81,7 @@ export function TopicStudio({
               <StoryboardView text={item.text} />
             </article>
           ))}
-          <Locked count={lockedBoards} label="条分镜" />
+          <Locked count={lockedBoards} label="条分镜" applyHref={applyHref} />
         </div>
       ) : null}
       {tab === "why" ? (
@@ -95,7 +99,7 @@ export function TopicStudio({
               </div>
             </article>
           ))}
-          <Locked count={lockedWhys} label="条拆解" />
+          <Locked count={lockedWhys} label="条拆解" applyHref={applyHref} />
         </div>
       ) : null}
       {tab === "bench" ? (
@@ -114,33 +118,36 @@ export function TopicStudio({
               ) : null}
             </article>
           ))}
-          <Locked count={lockedBenches} label="个对标" />
+          <Locked count={lockedBenches} label="个对标" applyHref={applyHref} />
         </div>
       ) : null}
       <div className="dock">
-        <Link className="btn btn-primary" href={`/shop?topic=${topicId}`}>
-          按我的店改写
-        </Link>
+        {showRewrite ? (
+          <Link className="btn btn-primary" href={`/shop?topic=${topicId}`}>
+            按我的店改写
+          </Link>
+        ) : null}
         <CopyButton text={activeText || copyText} label="复制" className="btn btn-ghost" />
       </div>
     </section>
   );
 }
 
-function Locked({ count, label }: { count: number; label: string }) {
+function Locked({ count, label, applyHref }: { count: number; label: string; applyHref: string }) {
   if (count <= 0) return null;
   return (
-    <div className="vip-lock">
+    <article className="vip-lock">
       <div className="vip-blur" aria-hidden="true">
         <span />
         <span />
         <span />
+        <span />
       </div>
-      <strong>还有 {count} {label}</strong>
-      <p>开通 VIP</p>
-      <Link className="btn btn-primary btn-sm" href="/vip">
-        开通 VIP
+      <h3>还有 {count} {label}</h3>
+      <p>看全部文案、分镜和拆解</p>
+      <Link className="btn btn-primary" href={applyHref}>
+        申请内测
       </Link>
-    </div>
+    </article>
   );
 }

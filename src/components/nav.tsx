@@ -14,9 +14,9 @@ const LINKS = [
   { href: "/ai", label: "问问AI", match: (path: string) => path.startsWith("/ai") },
 ];
 
-export function DesktopNav({ showCases = false }: { showCases?: boolean }) {
+export function DesktopNav({ showCases = false, showAi = false }: { showCases?: boolean; showAi?: boolean }) {
   const pathname = usePathname();
-  const links = LINKS.filter((link) => showCases || !("cases" in link && link.cases));
+  const links = LINKS.filter((link) => (showCases || !("cases" in link && link.cases)) && (showAi || link.href !== "/ai"));
   return (
     <nav className="desktop-nav" aria-label="主导航">
       {links.map((link) => (

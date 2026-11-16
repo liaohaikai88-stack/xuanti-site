@@ -16,6 +16,7 @@ export type ShopProfile = {
   audience: string;
   tone: string;
   ownerOnCamera: boolean;
+  sample: boolean;
 };
 
 const TONES = new Set(["亲切", "专业", "轻松"]);
@@ -28,6 +29,7 @@ type ProfileJson = {
   audience?: string;
   tone?: string;
   ownerOnCamera?: boolean;
+  sample?: boolean;
 };
 
 function readJson(raw: string): ProfileJson {
@@ -67,6 +69,7 @@ export function getShopProfile(db: DatabaseSync, userId: number): ShopProfile | 
     audience: String(extra.audience || ""),
     tone: TONES.has(String(extra.tone)) ? String(extra.tone) : "亲切",
     ownerOnCamera: extra.ownerOnCamera === true,
+    sample: extra.sample === true || String(row.shop_name || "") === "湖滨老街火锅",
   };
 }
 

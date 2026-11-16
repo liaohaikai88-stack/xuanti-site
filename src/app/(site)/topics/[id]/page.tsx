@@ -9,7 +9,8 @@ import { getCurrentUser } from "@/lib/current-user";
 import type { User } from "@/lib/types";
 import { getDb } from "@/lib/db";
 import { formatChineseDate, todayShanghai } from "@/lib/dates";
-import { copyUnlockFor } from "@/lib/membership";
+import { betaContactHref } from "@/lib/config";
+import { canUseAi, copyUnlockFor } from "@/lib/membership";
 import { platformClass, splitPlatforms } from "@/lib/platforms";
 import { shootMinutesFor } from "@/lib/storyboard";
 import { CopyButton } from "@/components/copy-button";
@@ -93,9 +94,11 @@ export default async function TopicDetailPage({ params }: Params) {
         <div className="card-actions" style={{ marginTop: 16 }}>
           <CopyButton text={topicCopyText(topic)} label="复制标题和钩子" />
           <FavoriteButton topicId={topic.id} initial={favorites.has(topic.id)} />
-          <Link className="btn btn-ghost" href={`/ai?topic=${topic.id}`}>
-            用这个选题帮我写
-          </Link>
+          {canUseAi(user) ? (
+            <Link className="btn btn-ghost" href={`/ai?topic=${topic.id}`}>
+              用这个选题帮我写
+            </Link>
+          ) : null}
         </div>
       </article>
       <CopySection topicId={topic.id} topicTitle={topic.title} viewer={user} />
@@ -144,6 +147,8 @@ function CopySection({ topicId, topicTitle, viewer }: { topicId: number; topicTi
       lockedBoards={boardSplit.locked.length}
       lockedWhys={whySplit.locked.length}
       lockedBenches={benchSplit.locked.length}
+      showRewrite={canUseAi(viewer)}
+      applyHref={betaContactHref()}
     />
   );
 }

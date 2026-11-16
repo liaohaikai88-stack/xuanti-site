@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { planBadge } from "@/lib/membership";
-import { isBillingEnabled } from "@/lib/config";
+import { canUseAi, planBadge } from "@/lib/membership";
+import { betaContactHref, isBillingEnabled } from "@/lib/config";
 import { listFavoriteTopics } from "@/lib/content";
 import { listOrdersForUser } from "@/lib/billing";
 import { getCurrentUser } from "@/lib/current-user";
@@ -36,14 +36,15 @@ export default async function MePage({
       </div>
       <Flash error={one(params.error)} ok={one(params.ok)} />
       <div className="chips">
-        <Link className="chip" href="/ai">
-          问问 AI
-        </Link>
-        {!planBadge(user) ? (
-          <Link className="chip" href="/vip">
-            会员内测中，联系我们开通
+        {canUseAi(user) ? (
+          <Link className="chip" href="/ai">
+            问问 AI
           </Link>
-        ) : null}
+        ) : (
+          <Link className="chip" href={betaContactHref()}>
+            申请内测
+          </Link>
+        )}
         {user.role === "admin" ? (
           <Link className="chip" href="/admin">
             进入后台

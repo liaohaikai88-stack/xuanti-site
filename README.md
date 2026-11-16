@@ -96,7 +96,7 @@ npm run smoke     # 对已启动的站点做一次访问检查，地址用 BASE_
 | Kimi / Moonshot | `https://api.moonshot.cn/v1` | `moonshot-v1-8k` |
 | 智谱 GLM | `https://open.bigmodel.cn/api/paas/v4` | `glm-4-flash` |
 
-实时热点每 `HOT_REFRESH_MINUTES` 分钟抓一次抖音、微博、百度热榜，并尝试头条和哔哩哔哩。某一来源失败就留着上一份快照。只存标题、排名、热度和链接，保留 7 天。灾难、敏感和公祭日不会拿来生成营销选题。配置了模型后，相关热榜标题会生成标记为「热点选题」的原创拍法，可在后台隐藏。
+实时热点每 `HOT_REFRESH_MINUTES` 分钟抓一次抖音、微博、百度热榜，并尝试头条和哔哩哔哩。某一来源失败就留着上一份快照。只存标题、排名、热度和链接，保留 7 天。默认页面只显示餐饮、美业、本地生活，或影视综艺这类生活话题。「全部热榜」才显示其余标题，时政、灾害、案件和公祭日仍然不出现。不会在生产环境写入假热榜。配置了模型后，相关热榜标题会生成标记为「热点选题」的原创拍法，可在后台隐藏。营业执照和生成式人工智能登记完成前，`AI_BETA_ONLY=true`，未勾选内测的访客看不到「按我的店改写」和「问问 AI」。免费档每天的次数只由 `AI_FREE_DAILY_MESSAGES` 这一处控制。发布包包含 `deploy/install-nginx.sh`；服务器上缺这个文件时，安装会跳过站点配置并继续重载服务。
 
 重装时如果 Nginx 配置里已经有证书或 Certbot 标记，安装脚本不会用纯 HTTP 配置覆盖它。证书文件在 `/etc/letsencrypt/live/jintianpaisha.cn` 时，会写成把 `www` 和 HTTP 都跳到 `https://jintianpaisha.cn` 的配置。
 

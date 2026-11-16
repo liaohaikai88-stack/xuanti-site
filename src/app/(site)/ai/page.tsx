@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { aiEnabled } from "@/lib/ai-client";
 import { canUseAi } from "@/lib/membership";
 import { listConversations, listMessages, quotaFor, messagesUsedToday } from "@/lib/ai-chat";
@@ -17,8 +18,8 @@ export default async function AiPage({
 }) {
   const params = await searchParams;
   const user = await getCurrentUser();
+  if (!canUseAi(user)) redirect("/");
   const enabled = aiEnabled();
-  const allowed = user ? canUseAi(user) : false;
   const topicId = Number(one(params.topic) || 0);
   const conversationId = Number(one(params.c) || 0);
   const db = getDb();
@@ -38,7 +39,6 @@ export default async function AiPage({
         </div>
       </div>
       {!enabled ? <p className="alert">即将上线</p> : null}
-      {enabled && user && !allowed ? <p className="alert">内测中，联系我们开通</p> : null}
       {enabled && !user ? (
         <div className="empty-state">
           <h3>登录后就能问</h3>
@@ -60,11 +60,11 @@ export default async function AiPage({
             ))}
           </aside>
           <AiChat
-            enabled={enabled && allowed}
+            enabled={enabled}
             conversationId={active?.id}
             topicId={topic?.id}
             initialMessages={messages}
-            quotaLabel={!enabled ? "即将上线" : !allowed ? "内测中" : `今天还剩 ${Math.max(0, quota - used)} 次`}
+            quotaLabel={!enabled ? "即将上线" : `今天还剩 ${Math.max(0, quota - used)} 次`}
           />
         </div>
       ) : null}

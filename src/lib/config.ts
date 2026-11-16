@@ -98,3 +98,12 @@ export function assertProductionSecrets(): void {
 export function databasePath(): string {
   return process.env.DATABASE_PATH || "./data/app.db";
 }
+
+/** Where “申请内测” goes. Uses the contact mailbox when one is configured. */
+export function betaContactHref(): string {
+  const email = (process.env.CONTACT_EMAIL || "").trim();
+  if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return `mailto:${email}?subject=${encodeURIComponent("申请内测")}`;
+  }
+  return "/vip#contact";
+}

@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { aiEnabled } from "@/lib/ai-client";
 import { subChoices } from "@/lib/catalog";
@@ -42,12 +41,16 @@ export default async function ShopPage({
     <>
       <div className="section-head">
         <div>
-          <h1>我的店铺</h1>
-          <p>填一次，之后每条选题都能按这家店改写。</p>
+          <h1>
+            我的店铺
+            {shop?.sample ? <span className="sample-badge">示例</span> : null}
+            {shop?.shopName ? <span className="fine"> {shop.shopName}</span> : null}
+          </h1>
+          <p>{allowed ? "填一次，之后每条选题都能按这家店改写。" : "记下店名、招牌和客人。"}</p>
         </div>
       </div>
       <Flash error={one(params.error)} ok={one(params.ok)} />
-      <p className="fine">{allowed ? `今天还剩 ${left} 次` : "内测中，联系我们开通"}</p>
+      {allowed ? <p className="fine">今天还剩 {left} 次</p> : null}
       <form className="form" method="post" action="/api/shop/profile">
         <label>
           <span>店名</span>
@@ -118,16 +121,12 @@ export default async function ShopPage({
         </button>
       </form>
 
+      {allowed ? (
       <section>
         <h2>按我的店改写</h2>
         {topic ? <p>当前选题：{topic.title}</p> : <p className="fine">从选题页点「按我的店改写」会带到这里。</p>}
         {!enabled ? <p className="alert">即将上线</p> : null}
-        {enabled && !allowed ? (
-          <p className="alert">
-            内测中，联系我们开通。<Link href="/vip">查看档位</Link>
-          </p>
-        ) : null}
-        {enabled && allowed && topic ? (
+        {enabled && topic ? (
           <form method="post" action="/api/shop/rewrite">
             <input type="hidden" name="topic_id" value={topic.id} />
             <button className="btn btn-primary" type="submit">
@@ -159,6 +158,7 @@ export default async function ShopPage({
           </article>
         ) : null}
       </section>
+      ) : null}
     </>
   );
 }

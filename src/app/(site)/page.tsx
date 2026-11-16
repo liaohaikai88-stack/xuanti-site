@@ -6,7 +6,8 @@ import { cautionVisibleOnHome, favoriteIdSet, getIndustryBySlug, listCases, list
 import { copyCounts } from "@/lib/copies";
 import { getCurrentUser } from "@/lib/current-user";
 import { getDb } from "@/lib/db";
-import { formatShanghaiClock, ideaForTitle, isSolemnToday, listHotRows, listManualIdeas } from "@/lib/hot";
+import { formatShanghaiClock, ideaForTitle, isShopRelevantHot, isSolemnToday, listHotRows, listManualIdeas } from "@/lib/hot";
+import { canUseAi } from "@/lib/membership";
 import { addDays, formatShortDate, todayShanghai } from "@/lib/dates";
 import { copyUnlockFor } from "@/lib/membership";
 import { one } from "@/lib/query";
@@ -47,7 +48,8 @@ export default async function HomePage({
   const industries = listIndustries(db);
   const hot = listHotRows(db);
   const ideas = isSolemnToday(db, today) ? [] : listManualIdeas(db);
-  const hotRows = [...hot.rows.filter((row) => row.tags.length > 0), ...hot.rows.filter((row) => row.tags.length === 0)].slice(0, 5);
+  const hotRows = hot.rows.filter((row) => isShopRelevantHot(row.title)).slice(0, 5);
+  const showAi = canUseAi(user);
   const hotUpdated = hot.updatedAt ? formatShanghaiClock(hot.updatedAt) : "";
   const week = Array.from({ length: 7 }, (_, index) => addDays(today, index));
   const events = listEvents(db);
@@ -73,10 +75,12 @@ export default async function HomePage({
             <p>怎么拍：{hero.note || hero.contentForm}</p>
             <p className="fine">预计拍摄 {shootMinutesFor(hero.contentForm, hero.shootMinutes)} 分钟 · {hero.heatSource}</p>
             <div className="hero-actions">
-              <Link className="btn btn-primary" href={user ? `/shop?topic=${hero.id}` : `/login?next=/shop?topic=${hero.id}`}>
-                按我的店改写
-              </Link>
-              <Link className="btn btn-ghost" href={`/topics/${hero.id}`}>
+              {showAi ? (
+                <Link className="btn btn-primary" href={`/shop?topic=${hero.id}`}>
+                  按我的店改写
+                </Link>
+              ) : null}
+              <Link className={showAi ? "btn btn-ghost" : "btn btn-primary"} href={`/topics/${hero.id}`}>
                 看完整选题
               </Link>
             </div>
@@ -115,7 +119,7 @@ export default async function HomePage({
             <h2>实时热点</h2>
             <p>{hotUpdated ? `更新于 ${hotUpdated}` : "热榜抓取后会出现在这里。"}</p>
           </div>
-          <Link href="/hot">全部热榜</Link>
+          <Link href="/hot">看热榜</Link>
         </div>
         <div className="hot-strip">
           {hotRows.length === 0 ? <p className="fine">还没有热榜快照。</p> : null}

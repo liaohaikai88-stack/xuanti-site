@@ -81,9 +81,13 @@ if [[ -d /etc/nginx/conf.d ]]; then
     source /etc/xuanti.env
     set +a
   fi
-  # shellcheck disable=SC1091
-  source /opt/xuanti/deploy/install-nginx.sh
-  NGINX_SITE_CONF=/etc/nginx/conf.d/xuanti.conf install_nginx_site
+  if [[ -f /opt/xuanti/deploy/install-nginx.sh ]]; then
+    # shellcheck disable=SC1091
+    source /opt/xuanti/deploy/install-nginx.sh
+    NGINX_SITE_CONF=/etc/nginx/conf.d/xuanti.conf install_nginx_site
+  else
+    echo "未找到 install-nginx.sh，跳过站点配置，继续安装服务。" >&2
+  fi
 fi
 systemctl daemon-reload
 systemctl enable --now xuanti

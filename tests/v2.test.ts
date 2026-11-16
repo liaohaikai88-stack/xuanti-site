@@ -14,7 +14,7 @@ import { importHotIdeas } from "../src/lib/hot.ts";
 import { activePlan, grantPlan, resolvedQuotas } from "../src/lib/membership.ts";
 import { parseStoryboard } from "../src/lib/storyboard.ts";
 import { migrate, openDatabase } from "../src/lib/db.ts";
-import { isBlockedHotTitle, listHotRows, parseDouyin, rankTrend, refreshHotLists, relevanceTags } from "../src/lib/hot.ts";
+import { isBlockedHotTitle, isShopRelevantHot, listHotRows, parseDouyin, rankTrend, refreshHotLists, relevanceTags } from "../src/lib/hot.ts";
 import { findSensitive } from "../src/lib/safety.ts";
 
 function freshDb() {
@@ -148,6 +148,12 @@ test("hot list keeps the last good snapshot and drops tragedies", async () => {
   const first = listHotRows(db, "douyin");
   assert.deepEqual(first.rows.map((row) => row.title), ["火锅新品"]);
   assert.equal(isBlockedHotTitle("地震遇难人数"), true);
+  assert.equal(isBlockedHotTitle("中俄美三国元首会晤"), true);
+  assert.equal(isBlockedHotTitle("APEC领导人会议"), true);
+  assert.equal(isShopRelevantHot("火锅新品"), true);
+  assert.equal(isShopRelevantHot("新歌演唱会"), true);
+  assert.equal(isShopRelevantHot("中俄美三国元首会晤"), false);
+  assert.equal(isShopRelevantHot("某地公布季度数据"), false);
   assert.deepEqual(relevanceTags("火锅新品"), ["餐饮"]);
   assert.equal(rankTrend(1, 4), "up");
   fail = true;
@@ -173,4 +179,9 @@ test("nginx install keeps an existing certificate config", () => {
   assert.match(https, /listen 443 ssl/);
   assert.match(https, /return 301 https:\/\/jintianpaisha\.cn/);
   assert.match(https, /server_name www\.jintianpaisha\.cn/);
+  const release = readFileSync("deploy/build-release.sh", "utf8");
+  assert.match(release, /deploy\/install-nginx\.sh release\/deploy/);
+  const remote = readFileSync("deploy/remote-install.sh", "utf8");
+  assert.match(remote, /if \[\[ -f \/opt\/xuanti\/deploy\/install-nginx\.sh \]\]/);
+  execFileSync("bash", ["-lc", "set -euo pipefail; if [[ -f /tmp/xuanti-missing-nginx.sh ]]; then source /tmp/xuanti-missing-nginx.sh; fi; echo ok"]);
 });
