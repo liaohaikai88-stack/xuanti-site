@@ -56,6 +56,10 @@ function mapTopic(row: Record<string, unknown>): Topic {
     hook: String(row.hook),
     platform: String(row.platform),
     contentForm: String(row.content_form),
+    subIndustry: String(row.sub_industry || ""),
+    difficulty: Math.min(3, Math.max(1, Number(row.difficulty || 2))),
+    heatSource: row.heat_source === "节日" || row.heat_source === "热点" ? row.heat_source : "常青",
+    shootMinutes: row.shoot_minutes == null ? null : Number(row.shoot_minutes),
     publishDate: String(row.publish_date),
     sortOrder: Number(row.sort_order ?? 0),
     note: String(row.note ?? ""),
@@ -189,7 +193,7 @@ export function deleteIndustry(db: DatabaseSync, id: number): void {
 
 export function listTopics(
   db: DatabaseSync,
-  filter: { date?: string; industrySlug?: string; query?: string; includeDrafts?: boolean; limit?: number } = {},
+  filter: { date?: string; industrySlug?: string; platform?: string; query?: string; includeDrafts?: boolean; limit?: number } = {},
 ): Topic[] {
   const where: string[] = [];
   const params: Array<string | number> = [];
@@ -201,6 +205,10 @@ export function listTopics(
   if (filter.industrySlug) {
     where.push("i.slug = ?");
     params.push(filter.industrySlug);
+  }
+  if (filter.platform) {
+    where.push("t.platform LIKE ? ESCAPE '\\'");
+    params.push(`%${filter.platform.replace(/[\\%_]/g, "\\$&")}%`);
   }
   if (filter.query) {
     const like = `%${filter.query.replace(/[\\%_]/g, "\\$&")}%`;
@@ -239,7 +247,21 @@ function assertTopicInput(db: DatabaseSync, input: TopicInput): TopicInput {
   if (!isIsoDate(input.publishDate)) throw new Error("发布日期格式应为 YYYY-MM-DD");
   const industry = db.prepare("SELECT id FROM industries WHERE id = ?").get(input.industryId);
   if (!industry) throw new Error("请选择行业");
-  return { ...input, title, hook, platform, contentForm, note: (input.note ?? "").trim() };
+  const heat = input.heatSource === "节日" || input.heatSource === "热点" ? input.heatSource : "常青";
+  const difficulty = Math.min(3, Math.max(1, Math.round(input.difficulty || 2)));
+  const shoot = input.shootMinutes && input.shootMinutes > 0 ? Math.min(180, Math.round(input.shootMinutes)) : null;
+  return {
+    ...input,
+    title,
+    hook,
+    platform,
+    contentForm,
+    note: (input.note ?? "").trim(),
+    subIndustry: (input.subIndustry ?? "").trim().slice(0, 20),
+    difficulty,
+    heatSource: heat,
+    shootMinutes: shoot,
+  };
 }
 
 export function createTopic(db: DatabaseSync, input: TopicInput): Topic {
@@ -248,8 +270,8 @@ export function createTopic(db: DatabaseSync, input: TopicInput): Topic {
   const sortOrder = value.sortOrder && value.sortOrder > 0 ? value.sortOrder : nextSortOrder(db, value.publishDate);
   const result = db
     .prepare(
-      `INSERT INTO topics (industry_id, title, hook, platform, content_form, publish_date, sort_order, note, is_sample, status, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO topics (industry_id, title, hook, platform, content_form, sub_industry, difficulty, heat_source, shoot_minutes, publish_date, sort_order, note, is_sample, status, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .run(
       value.industryId,
@@ -257,6 +279,10 @@ export function createTopic(db: DatabaseSync, input: TopicInput): Topic {
       value.hook,
       value.platform,
       value.contentForm,
+      value.subIndustry ?? "",
+      value.difficulty ?? 2,
+      value.heatSource ?? "常青",
+      value.shootMinutes ?? null,
       value.publishDate,
       sortOrder,
       value.note ?? "",
@@ -273,7 +299,8 @@ export function createTopic(db: DatabaseSync, input: TopicInput): Topic {
 export function updateTopic(db: DatabaseSync, id: number, input: TopicInput): void {
   const value = assertTopicInput(db, input);
   db.prepare(
-    `UPDATE topics SET industry_id = ?, title = ?, hook = ?, platform = ?, content_form = ?, publish_date = ?,
+    `UPDATE topics SET industry_id = ?, title = ?, hook = ?, platform = ?, content_form = ?, sub_industry = ?,
+     difficulty = ?, heat_source = ?, shoot_minutes = ?, publish_date = ?,
      sort_order = ?, note = ?, is_sample = ?, status = ?, updated_at = ? WHERE id = ?`,
   ).run(
     value.industryId,
@@ -281,6 +308,10 @@ export function updateTopic(db: DatabaseSync, id: number, input: TopicInput): vo
     value.hook,
     value.platform,
     value.contentForm,
+    value.subIndustry ?? "",
+    value.difficulty ?? 2,
+    value.heatSource ?? "常青",
+    value.shootMinutes ?? null,
     value.publishDate,
     value.sortOrder ?? 0,
     value.note ?? "",
@@ -327,6 +358,9 @@ export function importTopicRows(
         hook: row.hook,
         platform: row.platform,
         contentForm: row.contentForm,
+        subIndustry: row.subIndustry,
+        difficulty: row.difficulty,
+        heatSource: row.heatSource,
         publishDate: date,
         sortOrder: row.sortOrder,
         isSample: options.isSample,

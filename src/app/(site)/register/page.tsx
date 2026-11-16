@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { subChoices } from "@/lib/catalog";
 import { Logo } from "@/components/logo";
 import { Flash } from "@/components/flash";
 import { one } from "@/lib/query";
@@ -13,6 +14,7 @@ export default async function RegisterPage({
 }) {
   const params = await searchParams;
   const next = one(params.next) || "/";
+  const choices = subChoices();
   return (
     <div className="auth-wrap">
       <div className="auth-card">
@@ -37,6 +39,19 @@ export default async function RegisterPage({
           <label>
             <span>再输入一次密码</span>
             <input name="password_again" type="password" autoComplete="new-password" required minLength={8} />
+          </label>
+          <label>
+            <span>细分行业</span>
+            <select name="sub_industry" required defaultValue="">
+              <option value="" disabled>
+                请选择你的店
+              </option>
+              {choices.map((item) => (
+                <option key={item.slug} value={`${item.industry}/${item.name}`}>
+                  {item.industry} / {item.name}
+                </option>
+              ))}
+            </select>
           </label>
           <label className="consent">
             <input type="checkbox" name="consent" value="yes" required />

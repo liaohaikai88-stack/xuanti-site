@@ -16,7 +16,7 @@ export default async function ImportTopicsPage({
         <input type="hidden" name="return_to" value="/admin/topics/import" />
         <h2>批量导入选题</h2>
         <p className="fine">
-          CSV 请使用 UTF-8。表头：行业、选题标题、开头钩子、适合平台、内容形式。可选：发布日期、排序。
+          CSV 请使用 UTF-8。表头：行业、选题标题、开头钩子、适合平台、内容形式。可选：发布日期、排序、细分行业、难度、热度来源。
           <a href="/api/admin/template?kind=topics"> 下载当前种子作为模板</a>
         </p>
         <label>

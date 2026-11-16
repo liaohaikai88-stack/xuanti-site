@@ -3,6 +3,7 @@ import type { DatabaseSync } from "node:sqlite";
 import { secretKey } from "./config";
 import { insertId } from "./db";
 import { hashPassword, validatePassword, verifyPassword } from "./password";
+import { hydrateUsers } from "./membership";
 import type { Role, Tier, User } from "./types";
 
 const SESSION_DAYS = 30;
@@ -18,6 +19,10 @@ export function mapUser(row: Record<string, unknown>): User {
     consentVersion: row.consent_version ? String(row.consent_version) : null,
     tier: row.tier === "annual" ? "annual" : "free",
     membershipExpiresAt: row.membership_expires_at ? String(row.membership_expires_at) : null,
+    vipExpiresAt: row.vip_expires_at ? String(row.vip_expires_at) : null,
+    planSlug: "free",
+    planExpiresAt: null,
+    aiBeta: Number(row.ai_beta) === 1,
     credits: Number(row.credits ?? 0),
     createdAt: String(row.created_at),
     deletedAt: row.deleted_at ? String(row.deleted_at) : null,
@@ -103,7 +108,7 @@ export async function registerUser(db: DatabaseSync, input: RegisterInput): Prom
 
 export function getUserById(db: DatabaseSync, id: number): User | null {
   const row = db.prepare("SELECT * FROM users WHERE id = ? AND deleted_at IS NULL").get(id);
-  return row ? mapUser(row) : null;
+  return row ? hydrateUsers(db, [mapUser(row)])[0] : null;
 }
 
 export async function authenticate(
@@ -155,7 +160,7 @@ export function findUserBySession(db: DatabaseSync, token: string | undefined): 
        WHERE s.token_hash = ? AND s.expires_at > ? AND u.deleted_at IS NULL`,
     )
     .get(hashSessionToken(token), new Date().toISOString());
-  return row ? mapUser(row) : null;
+  return row ? hydrateUsers(db, [mapUser(row)])[0] : null;
 }
 
 export function destroySession(db: DatabaseSync, token: string | undefined): void {
@@ -179,10 +184,11 @@ export async function deleteAccount(db: DatabaseSync, userId: number, password: 
 }
 
 export function listUsers(db: DatabaseSync, limit = 200): User[] {
-  return db
+  const rows = db
     .prepare("SELECT * FROM users WHERE deleted_at IS NULL ORDER BY id DESC LIMIT ?")
     .all(limit)
     .map(mapUser);
+  return hydrateUsers(db, rows);
 }
 
 export function updateUserAdmin(

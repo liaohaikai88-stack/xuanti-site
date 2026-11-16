@@ -1,4 +1,5 @@
 import { createSession, registerUser } from "@/lib/auth";
+import { saveSignupProfile } from "@/lib/shop";
 import { ensureBootstrapped } from "@/lib/bootstrap";
 import { getDb } from "@/lib/db";
 import { assertSameOrigin, formString, redirectTo, safePath, setSessionCookie, HttpError } from "@/lib/http";
@@ -19,6 +20,7 @@ export async function POST(req: Request) {
     if (!result.ok) {
       return redirectTo(req, `/register?error=${encodeURIComponent(result.error)}&next=${encodeURIComponent(next)}`);
     }
+    saveSignupProfile(getDb(), result.user.id, formString(form, "sub_industry"));
     const token = createSession(getDb(), result.user.id);
     const response = redirectTo(req, next);
     setSessionCookie(response, token, req);

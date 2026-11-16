@@ -7,6 +7,9 @@ export type CsvTopicRow = {
   contentForm: string;
   publishDate?: string;
   sortOrder?: number;
+  subIndustry?: string;
+  difficulty?: number;
+  heatSource?: "节日" | "热点" | "常青";
 };
 
 export type CsvParseResult = {
@@ -102,6 +105,22 @@ export function parseTopicCsv(text: string): CsvParseResult {
       errors.push(`第 ${line} 行内容过长`);
       return;
     }
+    const subIndustry = (record["细分行业"] || "").slice(0, 20);
+    let difficulty: number | undefined;
+    if (record["难度"]) {
+      const parsed = Number(record["难度"]);
+      if (![1, 2, 3].includes(parsed)) {
+        errors.push(`第 ${line} 行难度需要是 1、2 或 3`);
+        return;
+      }
+      difficulty = parsed;
+    }
+    const heatRaw = record["热度来源"] || "";
+    const heatSource = heatRaw === "节日" || heatRaw === "热点" || heatRaw === "常青" ? heatRaw : undefined;
+    if (heatRaw && !heatSource) {
+      errors.push(`第 ${line} 行热度来源需要是节日、热点或常青`);
+      return;
+    }
     const publishDate = record["发布日期"] || undefined;
     if (publishDate && !/^\d{4}-\d{2}-\d{2}$/.test(publishDate)) {
       errors.push(`第 ${line} 行发布日期格式应为 YYYY-MM-DD`);
@@ -116,7 +135,7 @@ export function parseTopicCsv(text: string): CsvParseResult {
       }
       sortOrder = parsed;
     }
-    rows.push({ line, industry, title, hook, platform, contentForm, publishDate, sortOrder });
+    rows.push({ line, industry, title, hook, platform, contentForm, publishDate, sortOrder, subIndustry, difficulty, heatSource });
   });
   return { rows, errors };
 }

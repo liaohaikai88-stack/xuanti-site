@@ -132,10 +132,17 @@ export function listDailyStats(db: DatabaseSync, days = 30, today = todayShangha
 export function ensureAnalyticsPrivacyClause(db: DatabaseSync): void {
   const row = db.prepare("SELECT content FROM legal_docs WHERE slug = 'privacy'").get();
   if (!row) return;
-  const content = String(row.content);
-  if (content.includes(ANALYTICS_HEADING)) return;
-  db.prepare("UPDATE legal_docs SET content = ?, updated_at = ? WHERE slug = 'privacy'").run(
-    `${content.trimEnd()}\n\n${ANALYTICS_PRIVACY_SECTION}\n`,
-    new Date().toISOString(),
-  );
+  let content = String(row.content);
+  let changed = false;
+  if (!content.includes(ANALYTICS_HEADING)) {
+    content = `${content.trimEnd()}\n\n${ANALYTICS_PRIVACY_SECTION}\n`;
+    changed = true;
+  }
+  if (!content.includes("## 九、文案助手")) {
+    content = `${content.trimEnd()}\n\n## 九、文案助手与热点选题\n1. 当你使用「问问 AI」时，我们会把你输入的店铺情况和问题发送给所配置的大模型服务商，用来生成回复，并在服务器保存对话，方便你继续查看。\n2. 实时热点只保存公开热榜的标题、排名、热度和来源链接，不转载第三方正文。据此生成的「热点选题」是原创的门店拍法，不是新闻复述。\n3. 未配置大模型时，文案助手不会把你的内容发送出去。\n`;
+    changed = true;
+  }
+  if (changed) {
+    db.prepare("UPDATE legal_docs SET content = ?, updated_at = ? WHERE slug = 'privacy'").run(content, new Date().toISOString());
+  }
 }

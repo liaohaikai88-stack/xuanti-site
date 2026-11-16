@@ -53,7 +53,15 @@ npm run smoke     # 对已启动的站点做一次访问检查，地址用 BASE_
 | `PAYMENT_PROVIDER` | 现在只用 `manual`。`wechat` / `alipay` 会明确报尚未接入。 |
 | `LLM_API_KEY` / `LLM_BASE_URL` / `LLM_MODEL` | OpenAI 兼容接口。密钥留空则走本地提纲。 |
 | `BAIDU_TONGJI_ID` | 百度统计 ID。留空不加载脚本。填了才会在页面插入 `hm.baidu.com`。 |
-| `CASES_ENABLED` | 爆款拆解对外展示。默认 `false`，导航和首页都不出现。 |
+| `CASES_ENABLED` | 爆款拆解对外展示。默认 `false`，导航和首页都不出现，直接打开 `/cases` 返回 404。 |
+| `FREE_COPY_COUNT` | 免费档每个标签能看的条数，默认 1。设为 0 则这些内容都要 VIP。后台改过额度后以后台为准。 |
+| `AI_BETA_ONLY` | 默认 `true`。没有营业执照时，只有管理员和被勾上「AI 内测」的账号能改写、能问 AI，其他人看到「内测中」。 |
+| `AI_BASE_URL` / `AI_API_KEY` / `AI_MODEL` | OpenAI 兼容对话接口。密钥留空时问问 AI 显示「即将上线」，后台生成按钮不可用。 |
+| `AI_FREE_DAILY_MESSAGES` / `AI_VIP_DAILY_MESSAGES` / `AI_SHOP_DAILY_MESSAGES` | 每天改写次数的初始值，默认 3 / 30 / 100。后台「用户」里可以改。 |
+| `VIP_MONTH_YUAN` / `VIP_YEAR_YUAN` / `SHOP_MONTH_YUAN` / `SHOP_YEAR_YUAN` | 以后收费用的价格，默认 VIP 29.9 元/月、199 元/年，门店版 99 元/月、699 元/年。`MEMBERSHIP_BILLING_ENABLED=false` 时页面不展示。 |
+| `HOT_ENABLED` | 实时热点抓取，默认开启。 |
+| `HOT_REFRESH_MINUTES` | 抓取间隔，默认 30 分钟。 |
+| `HOT_INPROCESS` | 默认由网站进程自己定时抓。设为 `false` 时改用 systemd timer。 |
 | `SMS_PROVIDER` | 手机验证码登录的预留，保持 `none`。 |
 
 ## 访问统计
@@ -68,6 +76,29 @@ npm run smoke     # 对已启动的站点做一次访问检查，地址用 BASE_
 - 隐私政策第八节写了这件事。已经上线的库会在下次启动时补上这一节（如果正文里还没有）。
 
 百度统计是可选的。只有设置了 `BAIDU_TONGJI_ID` 才会加载。
+
+## 问问 AI 和实时热点
+
+文案助手和「按我的店改写」都走服务端，浏览器拿不到密钥。`AI_API_KEY` 为空时页面显示即将上线。生成结果会标明「AI 生成，仅供参考」，并记在 `ai_generations`。
+
+参考文案 CSV 可多一列「分镜」，例如 `镜头1 0-3秒 | 拍什么 | 说什么 | 拍法`。能拆开时详情页用表格显示镜号、画面、台词、时长、拍法，拆不开就按原文显示。选题 CSV 可以多一列「细分行业」。
+
+对标 CSV 列：选题标题、对标标题、平台、点赞、收藏、链接、查找时间。点赞和收藏可以空着。库里只留标题、数字和链接，前台写「数据截至 查找时间」。
+
+会员档位在 `membership_plans`（免费 / VIP / 门店版），每人一条 `user_memberships` 带到期时间。`shop_profiles.profile_json` 存人均、招牌、卖点和语气，`sub_industries` 是火锅、美甲这一层。违禁词在 `forbidden_words`，后台可改。实时热点另外可以导入 JSON（title、platform、rank、heat、url、fetched_at、industry、idea，heat 可为 null），用来挂「门店借势」。
+
+常用兼容地址：
+
+| 服务 | `AI_BASE_URL` | `AI_MODEL` 示例 |
+| --- | --- | --- |
+| DeepSeek | `https://api.deepseek.com` | `deepseek-chat` |
+| 通义千问 | `https://dashscope.aliyuncs.com/compatible-mode/v1` | `qwen-plus` |
+| Kimi / Moonshot | `https://api.moonshot.cn/v1` | `moonshot-v1-8k` |
+| 智谱 GLM | `https://open.bigmodel.cn/api/paas/v4` | `glm-4-flash` |
+
+实时热点每 `HOT_REFRESH_MINUTES` 分钟抓一次抖音、微博、百度热榜，并尝试头条和哔哩哔哩。某一来源失败就留着上一份快照。只存标题、排名、热度和链接，保留 7 天。灾难、敏感和公祭日不会拿来生成营销选题。配置了模型后，相关热榜标题会生成标记为「热点选题」的原创拍法，可在后台隐藏。
+
+重装时如果 Nginx 配置里已经有证书或 Certbot 标记，安装脚本不会用纯 HTTP 配置覆盖它。证书文件在 `/etc/letsencrypt/live/jintianpaisha.cn` 时，会写成把 `www` 和 HTTP 都跳到 `https://jintianpaisha.cn` 的配置。
 
 ## 后台
 

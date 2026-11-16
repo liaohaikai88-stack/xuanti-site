@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { planBadge } from "@/lib/membership";
 import { isBillingEnabled } from "@/lib/config";
 import { listFavoriteTopics } from "@/lib/content";
 import { listOrdersForUser } from "@/lib/billing";
@@ -28,15 +29,21 @@ export default async function MePage({
     <>
       <div className="section-head">
         <div>
-          <h1>{user.username}</h1>
+          <h1>{user.username}{planBadge(user) ? <span className="vip-badge">{planBadge(user)}</span> : null}</h1>
           <p>{user.email}</p>
+          <p className="fine">{planBadge(user) ? `${planBadge(user)} 到 ${user.planExpiresAt?.slice(0, 10)}` : "免费账号"}</p>
         </div>
       </div>
       <Flash error={one(params.error)} ok={one(params.ok)} />
       <div className="chips">
-        <Link className="chip" href="/tools/copy">
-          文案工具
+        <Link className="chip" href="/ai">
+          问问 AI
         </Link>
+        {!planBadge(user) ? (
+          <Link className="chip" href="/vip">
+            会员内测中，联系我们开通
+          </Link>
+        ) : null}
         {user.role === "admin" ? (
           <Link className="chip" href="/admin">
             进入后台
@@ -65,7 +72,7 @@ export default async function MePage({
         </section>
       ) : null}
       <section>
-        <div className="section-head">
+        <div className="section-head" id="fav">
           <h2>我的收藏</h2>
         </div>
         {favorites.length === 0 ? (

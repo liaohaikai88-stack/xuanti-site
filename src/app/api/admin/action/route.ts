@@ -23,7 +23,13 @@ import { getCurrentUser } from "@/lib/current-user";
 import { getDb } from "@/lib/db";
 import { todayShanghai } from "@/lib/dates";
 import { assertSameOrigin, formString, redirectTo, safePath, HttpError } from "@/lib/http";
+import { hideHotPitch, hideManualIdea, importHotIdeas } from "@/lib/hot";
+import { createTopicCopy, deleteTopicCopy, importCopyCsv, parseWhy, updateTopicCopy } from "@/lib/copies";
+import { importBenchmarkCsv } from "@/lib/benchmarks";
+import { addForbiddenWord, disableForbiddenWord } from "@/lib/forbidden";
 import { getUserById, updateUserAdmin } from "@/lib/auth";
+import { clearPlan, grantPlan, isPlanSlug, setAiBeta, setPlanQuotas } from "@/lib/membership";
+import type { HeatSource } from "@/lib/types";
 import type { EventType, TopicStatus } from "@/lib/types";
 
 export async function POST(req: Request) {
@@ -46,6 +52,10 @@ export async function POST(req: Request) {
         publishDate: formString(form, "publish_date"),
         sortOrder: Number(formString(form, "sort_order") || 0),
         note: formString(form, "note"),
+        subIndustry: formString(form, "sub_industry"),
+        difficulty: Number(formString(form, "difficulty") || 2),
+        heatSource: (formString(form, "heat_source") || "常青") as HeatSource,
+        shootMinutes: Number(formString(form, "shoot_minutes") || 0) || null,
         isSample: formString(form, "is_sample") === "yes",
         status: (formString(form, "status") === "draft" ? "draft" : "published") as TopicStatus,
       };
@@ -139,6 +149,79 @@ export async function POST(req: Request) {
       });
       if (tier === "annual" && before?.tier !== "annual") grantAnnualMembership(db, userId, 1);
       if (tier === "free" && before?.tier === "annual") clearMembership(db, userId);
+      const plan = formString(form, "plan");
+      if (plan === "free") clearPlan(db, userId);
+      else if (isPlanSlug(plan) && plan !== "free") {
+        const day = formString(form, "plan_expires");
+        const expiry = /^\d{4}-\d{2}-\d{2}$/.test(day)
+          ? new Date(`${day}T23:59:59+08:00`).toISOString()
+          : new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
+        grantPlan(db, userId, plan, expiry);
+      }
+      setAiBeta(db, userId, plan === "vip" || plan === "shop" || formString(form, "ai_beta") === "yes");
+    } else if (action === "update_quotas") {
+      setPlanQuotas(db, "free", {
+        aiDaily: Number(formString(form, "free_ai")),
+        copyUnlock: Number(formString(form, "free_copies")),
+        forbiddenDaily: Number(formString(form, "free_forbidden")),
+      });
+      setPlanQuotas(db, "vip", {
+        aiDaily: Number(formString(form, "vip_ai")),
+        copyUnlock: -1,
+        forbiddenDaily: -1,
+      });
+      setPlanQuotas(db, "shop", {
+        aiDaily: Number(formString(form, "shop_ai")),
+        copyUnlock: -1,
+        forbiddenDaily: -1,
+      });
+    } else if (action === "create_copy") {
+      createTopicCopy(db, {
+        topicId: Number(formString(form, "topic_id")),
+        styleLabel: formString(form, "style_label"),
+        body: String(form.get("body") ?? ""),
+        breakdown: parseWhy(String(form.get("why") ?? "")),
+        storyboard: String(form.get("storyboard") ?? ""),
+        status: formString(form, "status") === "draft" ? "draft" : "published",
+      });
+    } else if (action === "update_copy") {
+      updateTopicCopy(db, Number(formString(form, "id")), {
+        styleLabel: formString(form, "style_label"),
+        body: String(form.get("body") ?? ""),
+        breakdown: parseWhy(String(form.get("why") ?? "")),
+        storyboard: String(form.get("storyboard") ?? ""),
+        status: formString(form, "status") === "draft" ? "draft" : "published",
+        sortOrder: Number(formString(form, "sort_order") || 0),
+      });
+    } else if (action === "delete_copy") {
+      deleteTopicCopy(db, Number(formString(form, "id")));
+    } else if (action === "hide_pitch") {
+      hideHotPitch(db, Number(formString(form, "id")));
+    } else if (action === "import_benchmarks") {
+      const file = form.get("file");
+      if (!(file instanceof File)) throw new Error("请选择 CSV 文件");
+      if (file.size > 1_000_000) throw new Error("文件不能超过 1MB");
+      const result = importBenchmarkCsv(db, await file.text());
+      const message = `导入对标 ${result.imported} 条，跳过 ${result.skipped} 条${result.errors.length ? `。${result.errors.slice(0, 3).join("；")}` : ""}`;
+      return redirectTo(req, `${fallback}?ok=${encodeURIComponent(message)}`);
+    } else if (action === "import_hot_json") {
+      const raw = String(form.get("json") ?? "");
+      if (raw.length > 200_000) throw new Error("JSON 太大了");
+      const result = importHotIdeas(db, JSON.parse(raw) as unknown);
+      return redirectTo(req, `${fallback}?ok=${encodeURIComponent(`导入借势 ${result.imported} 条，跳过 ${result.skipped} 条`)}`);
+    } else if (action === "hide_manual") {
+      hideManualIdea(db, Number(formString(form, "id")));
+    } else if (action === "add_forbidden") {
+      addForbiddenWord(db, formString(form, "phrase"), formString(form, "replacement"), formString(form, "category"));
+    } else if (action === "disable_forbidden") {
+      disableForbiddenWord(db, Number(formString(form, "id")));
+    } else if (action === "import_copies") {
+      const file = form.get("file");
+      if (!(file instanceof File)) throw new Error("请选择 CSV 文件");
+      if (file.size > 1_000_000) throw new Error("文件不能超过 1MB");
+      const result = importCopyCsv(db, await file.text());
+      const message = `导入参考文案 ${result.imported} 条，跳过 ${result.skipped} 条${result.errors.length ? `。${result.errors.slice(0, 3).join("；")}` : ""}`;
+      return redirectTo(req, `${fallback}?ok=${encodeURIComponent(message)}`);
     } else if (action === "activate_order") {
       activateOrder(db, formString(form, "order_no"), admin.id);
     } else if (action === "adjust_credits") {
