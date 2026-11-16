@@ -1,5 +1,7 @@
 export type Role = "user" | "admin";
 export type Tier = "free" | "annual";
+export type PlanSlug = "free" | "vip" | "shop";
+export type HeatSource = "节日" | "热点" | "常青";
 export type TopicStatus = "draft" | "published";
 export type EventType = "holiday" | "solar_term" | "campaign" | "solemn";
 export type OrderStatus = "pending" | "paid" | "cancelled";
@@ -14,6 +16,10 @@ export type User = {
   consentVersion: string | null;
   tier: Tier;
   membershipExpiresAt: string | null;
+  vipExpiresAt: string | null;
+  planSlug: PlanSlug;
+  planExpiresAt: string | null;
+  aiBeta: boolean;
   credits: number;
   createdAt: string;
   deletedAt: string | null;
@@ -38,6 +44,10 @@ export type Topic = {
   hook: string;
   platform: string;
   contentForm: string;
+  subIndustry: string;
+  difficulty: number;
+  heatSource: HeatSource;
+  shootMinutes: number | null;
   publishDate: string;
   sortOrder: number;
   note: string;
@@ -107,6 +117,10 @@ export type TopicInput = {
   hook: string;
   platform: string;
   contentForm: string;
+  subIndustry?: string;
+  difficulty?: number;
+  heatSource?: HeatSource;
+  shootMinutes?: number | null;
   publishDate: string;
   sortOrder?: number;
   note?: string;

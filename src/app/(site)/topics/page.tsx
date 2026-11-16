@@ -3,6 +3,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { canSearch, hasFullAccess, splitPreview } from "@/lib/access";
 import { favoriteIdSet, getIndustryBySlug, listIndustries, listTopicDates, listTopics } from "@/lib/content";
+import { copyCounts } from "@/lib/copies";
+import { copyUnlockFor } from "@/lib/membership";
 import { getCurrentUser } from "@/lib/current-user";
 import { getDb } from "@/lib/db";
 import { formatShortDate, isIsoDate, todayShanghai } from "@/lib/dates";
@@ -47,6 +49,8 @@ export default async function TopicsPage({
     topics = industry ? preview.visible.filter((topic) => topic.industrySlug === industry.slug) : preview.visible;
   }
   const favorites = user && full ? favoriteIdSet(db, user.id) : new Set<number>();
+  const unlock = copyUnlockFor(db, user);
+  const counts = copyCounts(db, topics.map((topic) => topic.id));
   const dates = full ? listTopicDates(db) : [];
 
   return (
@@ -97,7 +101,7 @@ export default async function TopicsPage({
       ) : (
         <div className="masonry" style={{ marginTop: 16 }}>
           {topics.map((topic) => (
-            <TopicCard key={topic.id} topic={topic} favorited={favorites.has(topic.id)} />
+            <TopicCard key={topic.id} topic={topic} favorited={favorites.has(topic.id)} locked={unlock >= 0 && (counts.get(topic.id) || 0) > unlock} />
           ))}
         </div>
       )}

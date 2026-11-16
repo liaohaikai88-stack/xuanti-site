@@ -2,6 +2,7 @@ import { ensureAnalyticsPrivacyClause } from "./analytics";
 import { ensureAdmin } from "./auth";
 import { assertProductionSecrets } from "./config";
 import { getDb } from "./db";
+import { startHotScheduler } from "./hot";
 import { seedIfEmpty } from "./seed";
 
 let bootstrapped = false;
@@ -21,5 +22,6 @@ export async function ensureBootstrapped(): Promise<void> {
   seedIfEmpty(db);
   ensureAnalyticsPrivacyClause(db);
   await ensureAdmin(db);
+  startHotScheduler();
   bootstrapped = true;
 }

@@ -13,7 +13,7 @@ if [[ -d public ]]; then
   cp -a public release/public
 fi
 cp -a data/seed release/data/seed
-cp deploy/xuanti.service deploy/nginx.xuanti.conf deploy/add-swap.sh deploy/remote-install.sh release/deploy/
+cp deploy/xuanti.service deploy/nginx.xuanti.conf deploy/add-swap.sh deploy/remote-install.sh deploy/install-nginx.sh release/deploy/
 cp scripts/backup-db.mjs release/backup-db.mjs
 tar -C release -czf xuanti-release.tar.gz .
 echo "已生成 $(pwd)/xuanti-release.tar.gz"

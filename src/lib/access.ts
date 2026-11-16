@@ -28,6 +28,21 @@ export function canFavorite(user: AccessUser, now = new Date()): boolean {
   return hasFullAccess(user, now);
 }
 
+export function isVip(
+  user: { role?: string; vipExpiresAt?: string | null } | null,
+  now = new Date(),
+): boolean {
+  if (!user?.vipExpiresAt) return false;
+  return new Date(user.vipExpiresAt).getTime() > now.getTime();
+}
+
+/** Admins can review member-only copy. The badge itself is only for an active VIP expiry. */
+export function canSeeAllCopies(user: { role?: string; vipExpiresAt?: string | null } | null, now = new Date()): boolean {
+  if (!user) return false;
+  if (user.role === "admin") return true;
+  return isVip(user, now);
+}
+
 export function canReadTopic(
   topic: { id: number; status: string; publishDate: string },
   todaysPublished: Array<{ id: number }>,

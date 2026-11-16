@@ -1,14 +1,15 @@
 import Link from "next/link";
 import { isBillingEnabled, siteDomain } from "@/lib/config";
+import { planBadge } from "@/lib/membership";
 import type { User } from "@/lib/types";
 import { Logo } from "./logo";
 import { BottomNav, DesktopNav } from "./nav";
 
-export function Header({ user, showCases }: { user: User | null; showCases: boolean }) {
+export function Header({ user, showCases, showAi = false }: { user: User | null; showCases: boolean; showAi?: boolean }) {
   return (
     <header className="topbar">
       <Logo />
-      <DesktopNav showCases={showCases} />
+      <DesktopNav showCases={showCases} showAi={showAi} />
       <div className="top-actions">
         {isBillingEnabled() ? (
           <Link href="/pricing" className="nav-extra">
@@ -19,6 +20,7 @@ export function Header({ user, showCases }: { user: User | null; showCases: bool
         {user ? (
           <Link href="/me" className="user-chip">
             {user.username}
+            {planBadge(user) ? <span className="vip-badge">{planBadge(user)}</span> : null}
           </Link>
         ) : (
           <>
@@ -43,6 +45,8 @@ export function Footer() {
       <div className="footer-links">
         <Link href="/terms">用户协议</Link>
         <Link href="/privacy">隐私政策</Link>
+        <Link href="/tools/forbidden">违禁词检测</Link>
+        <Link href="/vip">会员</Link>
         <Link href="/calendar">热点日历</Link>
       </div>
       <div>域名 {siteDomain()}</div>

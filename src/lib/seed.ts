@@ -2,8 +2,10 @@ import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import type { DatabaseSync } from "node:sqlite";
 import type { CsvTopicRow } from "./csv";
+import { ensureSubIndustries } from "./catalog";
 import { parseTopicCsv } from "./csv";
 import { inferCalendarYear } from "./cn-date";
+import { createTopicCopy } from "./copies";
 import {
   createCase,
   createTopic,
@@ -107,20 +109,26 @@ function seedFresh(db: DatabaseSync, options: { today?: string; seedDir?: string
   if (parsedTopics.errors.length > 0) {
     throw new Error(`选题种子无法导入：${parsedTopics.errors.join("；")}`);
   }
-  for (const item of planRealTopics(parsedTopics.rows, today)) {
+  const heats = ["常青", "节日", "热点"] as const;
+  planRealTopics(parsedTopics.rows, today).forEach((item, index) => {
     const industry = ensureIndustry(db, item.industry);
+    const subs = subNames(item.industry);
     createTopic(db, {
       industryId: industry.id,
       title: item.title,
       hook: item.hook,
       platform: item.platform,
       contentForm: item.contentForm,
+      subIndustry: subs[index % Math.max(1, subs.length)] || "",
+      difficulty: (index % 3) + 1,
+      heatSource: heats[index % heats.length],
+      shootMinutes: 15 + (index % 3) * 10,
       publishDate: item.publishDate,
       sortOrder: item.sortOrder,
       isSample: false,
       status: "published",
     });
-  }
+  });
 
   const sampleDate = addDays(today, -3);
   SAMPLE_TOPICS.forEach((item, index) => {
@@ -150,6 +158,43 @@ function seedFresh(db: DatabaseSync, options: { today?: string; seedDir?: string
   saveLegal(db, "privacy", "隐私政策", privacy);
 
   seedCases(db, today);
+  const featured = db.prepare("SELECT id FROM topics WHERE title = ?").get("开店三年才敢说的5个后厨真相");
+  if (featured) seedStarterCopies(db, Number(featured.id));
+  seedSubIndustries(db);
+}
+
+function seedStarterCopies(db: DatabaseSync, topicId: number): void {
+  const samples = [
+    ["口播脚本", "开了三年，我才敢把后厨的门打开。手套、传菜口、还没摆盘的那一盘，今天都给你们看。不是来证明多干净，是让你知道这口饭是怎么来的。", "钩子：先给一个观众进不去的门\n结构：只讲一件后厨里看得到的事\n情绪：好奇，而不是被教育\n行动号召：评论区说你最在意后厨的哪一点\n平台：抖音前三秒先出画面", "镜头1 0-3秒 | 后厨门关上 | 先听到里面的声音\n镜头2 3-8秒 | 门打开，手套和传菜口 | 今天把门打开"],
+    ["小红书笔记", "第一次把后厨拍给客人看。没有滤镜，就是出餐前的三十秒。想吃得明白的人，可以先看这一条。", "钩子：把「第一次」放在开头\n结构：短句加一个具体时间\n情绪：放心，但不夸大\n行动号召：收藏，下次来店前再看\n平台：小红书适合图配短句"],
+    ["标题加开头", "标题：后厨门今天打开了\n开头：你点的那盘，三十秒前还在这个台子上。", "钩子：标题给结果，开头给时间\n结构：两句就够，不要先自我介绍\n情绪：具体，所以可信\n行动号召：让人停下来看下一秒\n平台：抖音标题和口播第一句分开写"],
+    ["故事型", "有个客人问我，后厨是不是都一个样。我没回答，把门推开了。他看完只说了一句：那我再坐一会儿。", "钩子：用客人的问题开头\n结构：问、开门、一句回应\n情绪：留白，不解释\n行动号召：结尾停在客人的话上\n平台：视频号和抖音都能用"],
+  ] as const;
+  samples.forEach(([style, body, why, board], index) => {
+    createTopicCopy(db, {
+      topicId,
+      styleLabel: style,
+      body,
+      storyboard: board || "",
+      breakdown: why.split("\n").map((line) => {
+        const [heading, text] = line.split("：");
+        return { heading: heading || "说明", text: text || line };
+      }),
+      status: "published",
+      sortOrder: index + 1,
+    });
+  });
+}
+
+function subNames(industry: string): string[] {
+  if (industry === "餐饮") return ["火锅", "奶茶饮品", "烘焙甜品", "烧烤", "快餐小吃", "咖啡"];
+  if (industry === "美业") return ["美甲", "美发", "皮肤管理", "美睫"];
+  if (industry === "本地生活") return ["健身", "宠物", "摄影", "亲子"];
+  return [];
+}
+
+function seedSubIndustries(db: DatabaseSync): void {
+  ensureSubIndustries(db);
 }
 
 function seedCases(db: DatabaseSync, today: string): void {

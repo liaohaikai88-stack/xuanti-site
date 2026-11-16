@@ -7,13 +7,16 @@ const LINKS = [
   { href: "/", label: "今日选题", match: (path: string) => path === "/" },
   { href: "/topics", label: "选题库", match: (path: string) => path.startsWith("/topics") },
   { href: "/calendar", label: "热点日历", match: (path: string) => path.startsWith("/calendar") },
+  { href: "/hot", label: "实时热点", match: (path: string) => path.startsWith("/hot") },
   { href: "/cases", label: "爆款拆解", match: (path: string) => path.startsWith("/cases"), cases: true },
-  { href: "/tools/copy", label: "文案工具", match: (path: string) => path.startsWith("/tools") },
+  { href: "/tools/forbidden", label: "违禁词", match: (path: string) => path.startsWith("/tools/forbidden") },
+  { href: "/shop", label: "店铺", match: (path: string) => path.startsWith("/shop") },
+  { href: "/ai", label: "问问AI", match: (path: string) => path.startsWith("/ai") },
 ];
 
-export function DesktopNav({ showCases = false }: { showCases?: boolean }) {
+export function DesktopNav({ showCases = false, showAi = false }: { showCases?: boolean; showAi?: boolean }) {
   const pathname = usePathname();
-  const links = LINKS.filter((link) => showCases || !("cases" in link && link.cases));
+  const links = LINKS.filter((link) => (showCases || !("cases" in link && link.cases)) && (showAi || link.href !== "/ai"));
   return (
     <nav className="desktop-nav" aria-label="主导航">
       {links.map((link) => (
@@ -26,18 +29,19 @@ export function DesktopNav({ showCases = false }: { showCases?: boolean }) {
 }
 
 const TABS = [
-  { href: "/", label: "今日", icon: "sun" },
+  { href: "/", label: "首页", icon: "sun" },
   { href: "/topics", label: "选题", icon: "cards" },
   { href: "/calendar", label: "日历", icon: "cal" },
-  { href: "/cases", label: "拆解", icon: "bolt", cases: true },
+  { href: "/me#fav", label: "收藏", icon: "heart" },
   { href: "/me", label: "我的", icon: "user" },
 ];
 
 export function BottomNav({ showCases = false }: { showCases?: boolean }) {
   const pathname = usePathname();
-  const tabs = TABS.filter((tab) => showCases || !("cases" in tab && tab.cases));
+  const tabs = TABS;
+  void showCases;
   return (
-    <nav className={showCases ? "bottom-nav" : "bottom-nav bottom-nav-4"} aria-label="底部导航">
+    <nav className="bottom-nav" aria-label="底部导航">
       {tabs.map((tab) => {
         const active = tab.href === "/" ? pathname === "/" : pathname.startsWith(tab.href);
         return (
@@ -73,6 +77,13 @@ function TabIcon({ name }: { name: string }) {
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
         <rect x="4" y="5" width="16" height="15" rx="2" />
         <path d="M8 3v4M16 3v4M4 10h16" />
+      </svg>
+    );
+  }
+  if (name === "heart") {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <path d="M12 19s-7-4.4-7-8.5A3.5 3.5 0 0 1 12 8a3.5 3.5 0 0 1 7 2.5C19 14.6 12 19 12 19z" />
       </svg>
     );
   }

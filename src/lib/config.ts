@@ -29,6 +29,19 @@ export function casesEnabled(): boolean {
   return flagEnabled("CASES_ENABLED");
 }
 
+/** How many published reference copies a non-VIP can read in full. 0 means all of them are VIP-only. */
+export function freeCopyCount(): number {
+  const parsed = Number(process.env.FREE_COPY_COUNT ?? 1);
+  if (!Number.isFinite(parsed) || parsed < 0) return 1;
+  return Math.min(20, Math.floor(parsed));
+}
+
+export function aiDailyQuota(vip: boolean): number {
+  const parsed = Number(process.env[vip ? "AI_VIP_DAILY_MESSAGES" : "AI_FREE_DAILY_MESSAGES"] ?? (vip ? 100 : 3));
+  if (!Number.isFinite(parsed) || parsed < 0) return vip ? 100 : 3;
+  return Math.min(1000, Math.floor(parsed));
+}
+
 export function previewCount(): number {
   const parsed = Number(process.env.FREE_PREVIEW_COUNT ?? 4);
   if (!Number.isFinite(parsed)) return 4;
@@ -84,4 +97,13 @@ export function assertProductionSecrets(): void {
 
 export function databasePath(): string {
   return process.env.DATABASE_PATH || "./data/app.db";
+}
+
+/** Where “申请内测” goes. Uses the contact mailbox when one is configured. */
+export function betaContactHref(): string {
+  const email = (process.env.CONTACT_EMAIL || "").trim();
+  if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return `mailto:${email}?subject=${encodeURIComponent("申请内测")}`;
+  }
+  return "/vip#contact";
 }

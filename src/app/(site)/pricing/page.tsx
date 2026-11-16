@@ -13,7 +13,7 @@ export default async function PricingPage() {
     <article className="shot-card">
       <h1>年度会员</h1>
       <p className="shot-hook">{price} 元 / 年</p>
-      <p>开通后可查看全部选题、历史、搜索、收藏和完整拆解。支付渠道尚未接入，提交后由管理员确认并开通。</p>
+      <p>开通后可查看全部选题、历史、搜索、收藏和完整拆解。提交申请后，我们确认再为你开通。</p>
       {user ? (
         <form method="post" action="/api/billing/orders">
           <button className="btn btn-primary" type="submit">

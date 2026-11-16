@@ -1,7 +1,10 @@
 import { mkdirSync } from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
+import { ensureSubIndustries } from "./catalog";
 import { databasePath } from "./config";
+import { ensureForbiddenWords } from "./forbidden";
+import { ensurePlans } from "./membership";
 
 const SCHEMA = `
 PRAGMA journal_mode = WAL;
@@ -161,6 +164,72 @@ CREATE TABLE IF NOT EXISTS daily_active_users (
   user_id INTEGER NOT NULL,
   PRIMARY KEY (day, user_id)
 );
+
+CREATE TABLE IF NOT EXISTS topic_copies (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  topic_id INTEGER NOT NULL REFERENCES topics(id) ON DELETE CASCADE,
+  style_label TEXT NOT NULL,
+  body TEXT NOT NULL,
+  breakdown_json TEXT NOT NULL DEFAULT '[]',
+  status TEXT NOT NULL DEFAULT 'published' CHECK(status IN ('draft','published')),
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  storyboard TEXT NOT NULL DEFAULT '',
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_topic_copies_topic ON topic_copies(topic_id, status, sort_order);
+
+CREATE TABLE IF NOT EXISTS ai_conversations (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  topic_id INTEGER REFERENCES topics(id) ON DELETE SET NULL,
+  title TEXT NOT NULL DEFAULT '',
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_ai_conversations_user ON ai_conversations(user_id, updated_at);
+
+CREATE TABLE IF NOT EXISTS ai_messages (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  conversation_id INTEGER NOT NULL REFERENCES ai_conversations(id) ON DELETE CASCADE,
+  role TEXT NOT NULL CHECK(role IN ('user','assistant')),
+  content TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_ai_messages_conv ON ai_messages(conversation_id, id);
+
+CREATE TABLE IF NOT EXISTS hot_items (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  source TEXT NOT NULL,
+  rank INTEGER NOT NULL,
+  title TEXT NOT NULL,
+  heat TEXT NOT NULL DEFAULT '',
+  url TEXT NOT NULL DEFAULT '',
+  fetched_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_hot_source_time ON hot_items(source, fetched_at);
+
+CREATE TABLE IF NOT EXISTS hot_fetch_log (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  source TEXT NOT NULL,
+  ok INTEGER NOT NULL,
+  message TEXT NOT NULL,
+  fetched_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS hot_pitches (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  hot_title TEXT NOT NULL,
+  source TEXT NOT NULL,
+  source_url TEXT NOT NULL DEFAULT '',
+  industry TEXT NOT NULL,
+  title TEXT NOT NULL,
+  hook TEXT NOT NULL,
+  platform TEXT NOT NULL,
+  angle TEXT NOT NULL DEFAULT '',
+  hidden INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL
+);
 `;
 
 const globalForDb = globalThis as unknown as { __xuantiDb?: DatabaseSync; __xuantiPath?: string };
@@ -177,10 +246,125 @@ export function openDatabase(filename: string): DatabaseSync {
 
 export function migrate(db: DatabaseSync): void {
   db.exec(SCHEMA);
+  const columns = db.prepare("PRAGMA table_info(users)").all();
+  if (!columns.some((column) => column.name === "vip_expires_at")) {
+    db.exec("ALTER TABLE users ADD COLUMN vip_expires_at TEXT");
+  }
+  const copyColumns = db.prepare("PRAGMA table_info(topic_copies)").all();
+  if (copyColumns.length > 0 && !copyColumns.some((column) => column.name === "storyboard")) {
+    db.exec("ALTER TABLE topic_copies ADD COLUMN storyboard TEXT NOT NULL DEFAULT ''");
+  }
+  const topicColumns = db.prepare("PRAGMA table_info(topics)").all();
+  if (topicColumns.length > 0 && !topicColumns.some((column) => column.name === "sub_industry")) {
+    db.exec("ALTER TABLE topics ADD COLUMN sub_industry TEXT NOT NULL DEFAULT ''");
+  }
+  if (topicColumns.length > 0 && !topicColumns.some((column) => column.name === "difficulty")) {
+    db.exec("ALTER TABLE topics ADD COLUMN difficulty INTEGER NOT NULL DEFAULT 2");
+  }
+  if (topicColumns.length > 0 && !topicColumns.some((column) => column.name === "heat_source")) {
+    db.exec("ALTER TABLE topics ADD COLUMN heat_source TEXT NOT NULL DEFAULT '常青'");
+  }
+  if (topicColumns.length > 0 && !topicColumns.some((column) => column.name === "shoot_minutes")) {
+    db.exec("ALTER TABLE topics ADD COLUMN shoot_minutes INTEGER");
+  }
+  if (!columns.some((column) => column.name === "ai_beta")) {
+    db.exec("ALTER TABLE users ADD COLUMN ai_beta INTEGER NOT NULL DEFAULT 0");
+  }
+  ensureExtensibleTables(db);
+  ensurePlans(db);
+  ensureForbiddenWords(db);
+  ensureSubIndustries(db);
   const existing = db.prepare("SELECT id FROM schema_migrations WHERE id = 1").get();
   if (!existing) {
     db.prepare("INSERT INTO schema_migrations (id, applied_at) VALUES (1, ?)").run(new Date().toISOString());
   }
+}
+
+function ensureExtensibleTables(db: DatabaseSync): void {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS sub_industries (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      industry_id INTEGER NOT NULL REFERENCES industries(id) ON DELETE CASCADE,
+      slug TEXT NOT NULL,
+      name TEXT NOT NULL,
+      sort_order INTEGER NOT NULL DEFAULT 0,
+      extra_json TEXT NOT NULL DEFAULT '{}',
+      UNIQUE(industry_id, slug)
+    );
+    CREATE TABLE IF NOT EXISTS shop_profiles (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+      shop_name TEXT NOT NULL DEFAULT '',
+      industry_id INTEGER REFERENCES industries(id),
+      sub_industry_id INTEGER REFERENCES sub_industries(id),
+      city TEXT NOT NULL DEFAULT '',
+      profile_json TEXT NOT NULL DEFAULT '{}',
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS membership_plans (
+      slug TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      sort_order INTEGER NOT NULL DEFAULT 0,
+      quotas_json TEXT NOT NULL DEFAULT '{}',
+      features_json TEXT NOT NULL DEFAULT '{}',
+      extra_json TEXT NOT NULL DEFAULT '{}'
+    );
+    CREATE TABLE IF NOT EXISTS user_memberships (
+      user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+      tier_slug TEXT NOT NULL,
+      expires_at TEXT,
+      granted_at TEXT NOT NULL,
+      note TEXT NOT NULL DEFAULT ''
+    );
+    CREATE TABLE IF NOT EXISTS benchmark_cases (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      topic_title TEXT NOT NULL,
+      benchmark_title TEXT NOT NULL,
+      platform TEXT NOT NULL DEFAULT '',
+      likes INTEGER,
+      favorites INTEGER,
+      url TEXT NOT NULL DEFAULT '',
+      looked_up_at TEXT NOT NULL DEFAULT '',
+      created_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_benchmark_title ON benchmark_cases(topic_title);
+    CREATE TABLE IF NOT EXISTS forbidden_words (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      phrase TEXT NOT NULL UNIQUE,
+      replacement TEXT NOT NULL DEFAULT '',
+      category TEXT NOT NULL DEFAULT '',
+      enabled INTEGER NOT NULL DEFAULT 1
+    );
+    CREATE TABLE IF NOT EXISTS tool_usage (
+      day TEXT NOT NULL,
+      actor_key TEXT NOT NULL,
+      tool TEXT NOT NULL,
+      count INTEGER NOT NULL DEFAULT 0,
+      PRIMARY KEY (day, actor_key, tool)
+    );
+    CREATE TABLE IF NOT EXISTS ai_generations (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      topic_id INTEGER,
+      kind TEXT NOT NULL,
+      output_text TEXT NOT NULL,
+      created_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_ai_generations_user ON ai_generations(user_id, kind, created_at);
+    CREATE TABLE IF NOT EXISTS hot_manual (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      title TEXT NOT NULL,
+      platform TEXT NOT NULL DEFAULT '',
+      rank INTEGER,
+      heat TEXT NOT NULL DEFAULT '',
+      url TEXT NOT NULL DEFAULT '',
+      fetched_at TEXT NOT NULL,
+      industry TEXT NOT NULL DEFAULT '',
+      idea TEXT NOT NULL DEFAULT '',
+      hidden INTEGER NOT NULL DEFAULT 0
+    );
+  `);
 }
 
 export function getDb(): DatabaseSync {

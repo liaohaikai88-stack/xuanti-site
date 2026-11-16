@@ -50,6 +50,16 @@ LLM_MODEL=gpt-4o-mini
 SMS_PROVIDER=none
 BAIDU_TONGJI_ID=
 CASES_ENABLED=false
+FREE_COPY_COUNT=1
+AI_BASE_URL=
+AI_API_KEY=
+AI_MODEL=
+AI_FREE_DAILY_MESSAGES=3
+AI_VIP_DAILY_MESSAGES=100
+HOT_ENABLED=true
+HOT_REFRESH_MINUTES=30
+HOT_INPROCESS=true
+CONTACT_EMAIL=
 EOF
   chmod 600 /etc/xuanti.env
   install -m 600 /dev/null /root/xuanti-admin-password.txt
@@ -65,7 +75,19 @@ fi
 
 install -m 644 /opt/xuanti/deploy/xuanti.service /etc/systemd/system/xuanti.service
 if [[ -d /etc/nginx/conf.d ]]; then
-  install -m 644 /opt/xuanti/deploy/nginx.xuanti.conf /etc/nginx/conf.d/xuanti.conf
+  if [[ -f /etc/xuanti.env ]]; then
+    set -a
+    # shellcheck disable=SC1091
+    source /etc/xuanti.env
+    set +a
+  fi
+  if [[ -f /opt/xuanti/deploy/install-nginx.sh ]]; then
+    # shellcheck disable=SC1091
+    source /opt/xuanti/deploy/install-nginx.sh
+    NGINX_SITE_CONF=/etc/nginx/conf.d/xuanti.conf install_nginx_site
+  else
+    echo "未找到 install-nginx.sh，跳过站点配置，继续安装服务。" >&2
+  fi
 fi
 systemctl daemon-reload
 systemctl enable --now xuanti
